@@ -1,0 +1,11 @@
+#ifndef ROBOT_CONFIG_H
+#define ROBOT_CONIFG_H
+
+#define CELL_DISTANCE_CM 25
+#define WALL_THRESHOLD_CM 20
+
+#define MOVE_ONE_CELL_TIME_MS 1000
+#define TURN_90_TIME_MS 400
+#define TURN_180_TIME_MS 800
+
+#endif
