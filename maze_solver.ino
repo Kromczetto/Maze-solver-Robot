@@ -6,15 +6,14 @@
 #include "left_hand.h"
 
 void setup() {
-  // put your setup code here, to run once:
   initMotors();
   initSensors();
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
-  updateMotion();
-  if (isRobotIdle()) {
-    leftHandStep();
-  }
+    updateMotion();
+
+    if (isRobotIdle()) {
+        leftHandStep();
+    }
 }

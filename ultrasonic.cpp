@@ -39,6 +39,10 @@ static float readDistance(int trigPin, int echoPin) {
 
     float distance = duration * 0.0343 / 2.0;
 
+    if (distance == 0 || distance > 200) {
+        distance = 200;
+    }
+
     return distance;
 }
 

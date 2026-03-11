@@ -1,14 +1,15 @@
 #ifndef MOTION_H
 #define MOTION_H
 
-void moveForwardCell();
+bool isRobotIdle();
 
+void moveForward();
 void turnLeft90();
 void turnRight90();
 void turnAround();
 
 void updateMotion();
-
-bool isRobotIdle();
+void stabilizeForward();
+void moveForwardShort();
 
 #endif

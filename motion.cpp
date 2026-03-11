@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include "motion.h"
 #include "motors.h"
+#include "ultrasonic.h"
 #include "robot_config.h"
 
 enum RobotState {
@@ -13,38 +14,29 @@ enum RobotState {
 
 static RobotState currentState = IDLE;
 
-static unsigned long stateStartTime = 0;
-static unsigned long stateDuration = 0;
-
 bool isRobotIdle() {
     return currentState == IDLE;
 }
 
-void moveForwardCell() {
+void moveForward() {
     leftMotorForward();
     rightMotorForward();
 
     currentState = MOVING_FORWARD;
-    stateStartTime = millis();
-    stateDuration = MOVE_ONE_CELL_TIME_MS;
-}
+} 
 
 void turnLeft90() {
-    leftMotorStop();
-    rightMotorForward();
+    leftMotorForward();
+    rightMotorBackward();
 
     currentState = TURNING_LEFT;
-    stateStartTime = millis();
-    stateDuration = TURN_90_TIME_MS;
 }
 
 void turnRight90() {
-    rightMotorStop();
-    leftMotorForward();
+    leftMotorBackward();
+    rightMotorForward();
 
     currentState = TURNING_RIGHT;
-    stateStartTime = millis();
-    stateDuration = TURN_90_TIME_MS;
 }
 
 void turnAround() {
@@ -52,17 +44,99 @@ void turnAround() {
     rightMotorForward();
 
     currentState = TURNING_AROUND;
-    stateStartTime = millis();
-    stateDuration = TURN_180_TIME_MS;
 }
 
-void updateMotion() {
-    if (currentState == IDLE) {
+void stabilizeForward() {
+    float left = getLeftDistance();
+    float right = getRightDistance();
+
+    const float wallDetect = 12;
+    const float target = 6.0;
+    const float tolerance = 1.5;
+
+    if (left > wallDetect || right > wallDetect) {
+        leftMotorForward();
+        rightMotorForward();
         return;
     }
 
-    if (millis() - stateStartTime >= stateDuration) {
-        stopMotors();
-        currentState = IDLE;
+    if ((left < target - tolerance) || (right < target - tolerance)) {
+        leftMotorForward();
+        rightMotorStop();
+    }
+
+    else if ((left > target + tolerance) || (right > target + tolerance)) {
+        leftMotorStop();
+        rightMotorForward();
+    }
+    
+    else {
+        leftMotorForward();
+        rightMotorForward();
+    }
+}
+
+void moveForwardShort() {
+
+    unsigned long start = millis();
+
+    leftMotorForward();
+    rightMotorForward();
+
+    while (millis() - start < 120) {
+        delay(1);
+    }
+
+    stopMotors();
+}
+
+void updateMotion() {
+    if (currentState == IDLE) return;
+
+    float front = getFrontDistance();
+    float left = getLeftDistance();
+    float right = getRightDistance();
+
+    switch (currentState) {
+        case MOVING_FORWARD:
+
+            if (front < WALL_THRESHOLD_CM) {
+                stopMotors();
+                currentState = IDLE;
+            }
+
+            stabilizeForward();
+
+        break;
+
+        case TURNING_LEFT:
+            
+            if (front > WALL_THRESHOLD_CM + 15 && left < WALL_THRESHOLD_CM + 5) {
+                stopMotors();
+                currentState = IDLE;
+            }
+
+        break;
+
+        case TURNING_RIGHT:
+            
+            if (front > WALL_THRESHOLD_CM + 15 && right < WALL_THRESHOLD_CM + 5) {
+                stopMotors();
+                currentState = IDLE;
+            }
+            
+        break;
+        
+        case TURNING_AROUND: 
+
+            if (front > WALL_THRESHOLD_CM) {
+                stopMotors();
+                currentState = IDLE;
+            }
+        
+        break;
+
+        default: 
+        break;
     }
 }

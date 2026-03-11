@@ -1,11 +1,11 @@
 #include <Arduino.h>
 #include "motors.h"
 
-#define LEFT_IN1 2
-#define LEFT_IN2 3
+#define LEFT_IN1 3
+#define LEFT_IN2 2
 
-#define RIGHT_IN1 4
-#define RIGHT_IN2 5
+#define RIGHT_IN1 5
+#define RIGHT_IN2 4
 
 void initMotors() {
     pinMode(LEFT_IN1, OUTPUT);
