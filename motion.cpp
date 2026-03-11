@@ -49,6 +49,7 @@ void turnAround() {
 void stabilizeForward() {
     float left = getLeftDistance();
     float right = getRightDistance();
+    float front = getFrontDistance();
 
     const float wallDetect = 12;
     const float target = 6.0;
@@ -60,14 +61,14 @@ void stabilizeForward() {
         return;
     }
 
-    if ((left < target - tolerance) || (right < target - tolerance)) {
-        leftMotorForward();
-        rightMotorStop();
-    }
-
-    else if ((left > target + tolerance) || (right > target + tolerance)) {
+    if (((left < target - tolerance) && (front > 10)) || ((right < target - tolerance) && (front > 10))) {
         leftMotorStop();
         rightMotorForward();
+    }
+
+    else if (((left > target + tolerance) && (front > 10)) || ((right > target + tolerance) && (front > 10))) {
+        leftMotorForward();
+        rightMotorStop();
     }
     
     else {
