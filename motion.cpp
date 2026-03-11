@@ -26,15 +26,15 @@ void moveForward() {
 } 
 
 void turnLeft90() {
-    leftMotorForward();
-    rightMotorBackward();
+    leftMotorStop();
+    rightMotorForward();
 
     currentState = TURNING_LEFT;
 }
 
 void turnRight90() {
-    leftMotorBackward();
-    rightMotorForward();
+    leftMotorForward();
+    rightMotorStop();
 
     currentState = TURNING_RIGHT;
 }
@@ -52,9 +52,9 @@ void stabilizeForward() {
 
     const float wallDetect = 12;
     const float target = 6.0;
-    const float tolerance = 1.5;
+    const float tolerance = 2;
 
-    if (left > wallDetect || right > wallDetect) {
+    if (left > wallDetect && right > wallDetect) {
         leftMotorForward();
         rightMotorForward();
         return;
@@ -83,7 +83,7 @@ void moveForwardShort() {
     leftMotorForward();
     rightMotorForward();
 
-    while (millis() - start < 120) {
+    while (millis() - start < 200) {
         delay(1);
     }
 
@@ -100,6 +100,18 @@ void updateMotion() {
     switch (currentState) {
         case MOVING_FORWARD:
 
+            if (left > WALL_THRESHOLD_CM + 15) {
+                stopMotors();
+                currentState = IDLE;
+                break;
+            }
+
+            if (right > WALL_THRESHOLD_CM + 15) {
+                stopMotors();
+                currentState = IDLE;
+                break;
+            }
+
             if (front < WALL_THRESHOLD_CM) {
                 stopMotors();
                 currentState = IDLE;
@@ -111,7 +123,7 @@ void updateMotion() {
 
         case TURNING_LEFT:
             
-            if (front > WALL_THRESHOLD_CM + 15 && left < WALL_THRESHOLD_CM + 5) {
+            if (right < 8 && front > WALL_THRESHOLD_CM + 25) {
                 stopMotors();
                 currentState = IDLE;
             }
@@ -120,7 +132,7 @@ void updateMotion() {
 
         case TURNING_RIGHT:
             
-            if (front > WALL_THRESHOLD_CM + 15 && right < WALL_THRESHOLD_CM + 5) {
+            if (left < 8 && front > WALL_THRESHOLD_CM + 25) {
                 stopMotors();
                 currentState = IDLE;
             }

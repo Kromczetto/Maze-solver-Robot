@@ -27,23 +27,47 @@ void initSensors() {
     pinMode(ECHO_BACK, INPUT);
 }
 
+static float median3(float a, float b, float c) {
+
+    if (a > b) { float t = a; a = b; b = t; }
+    if (b > c) { float t = b; b = c; c = t; }
+    if (a > b) { float t = a; a = b; b = t; }
+
+    return b;
+}
+
 static float readDistance(int trigPin, int echoPin) {
-    digitalWrite(trigPin, LOW);
-    delayMicroseconds(2);
+    float d1, d2, d3;
 
-    digitalWrite(trigPin, HIGH);
-    delayMicroseconds(10);
-    digitalWrite(trigPin, LOW);
+    auto measure = [&](void) {
 
-    long duration = pulseIn(echoPin, HIGH);
+        digitalWrite(trigPin, LOW);
+        delayMicroseconds(2);
 
-    float distance = duration * 0.0343 / 2.0;
+        digitalWrite(trigPin, HIGH);
+        delayMicroseconds(10);
+        digitalWrite(trigPin, LOW);
 
-    if (distance == 0 || distance > 200) {
-        distance = 200;
-    }
+        long duration = pulseIn(echoPin, HIGH, 20000);
 
-    return distance;
+        float distance = duration * 0.0343 / 2.0;
+
+        if (distance == 0 || distance > 200) {
+            distance = 200;
+        }
+
+        return distance;
+    };
+
+    d1 = measure();
+    delay(2);
+
+    d2 = measure();
+    delay(2);
+
+    d3 = measure();
+
+    return median3(d1, d2, d3);
 }
 
 float getFrontDistance() {

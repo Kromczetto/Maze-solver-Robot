@@ -4,8 +4,4 @@
 #define CELL_DISTANCE_CM 25
 #define WALL_THRESHOLD_CM 5
 
-// #define MOVE_ONE_CELL_TIME_MS 1200
-// #define TURN_90_TIME_MS 450
-// #define TURN_180_TIME_MS 900
-
 #endif
