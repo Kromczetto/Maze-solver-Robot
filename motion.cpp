@@ -51,6 +51,12 @@ void stabilizeForward() {
     float right = getRightDistance();
     float front = getFrontDistance();
 
+    if (front < 7) {
+        stopMotors();
+        currentState = IDLE;
+        return;
+    }
+
     const float wallDetect = 12;
     const float target = 6.0;
     const float tolerance = 2;
@@ -85,21 +91,45 @@ void moveForwardShort() {
     rightMotorForward();
 
     while (millis() - start < 200) {
-        delay(1);
+        updateMotion();
     }
 
     stopMotors();
 }
 
 void updateMotion() {
+    
     if (currentState == IDLE) return;
-
+    
     float front = getFrontDistance();
     float left = getLeftDistance();
     float right = getRightDistance();
+    
+    if (front < 7) {
+        stopMotors();
+        currentState = IDLE;
+        return;
+    }
 
     switch (currentState) {
         case MOVING_FORWARD:
+
+            // if (left < WALL_THRESHOLD_CM + 5 && right < WALL_THRESHOLD_CM + 5 && front < WALL_THRESHOLD_CM + 5) {
+            //     stopMotors();
+            //     currentState = IDLE;
+            //     break;
+            // }
+           // Serial.println(front);
+            //if (left < WALL_THRESHOLD_CM + 5 && right < WALL_THRESHOLD_CM + 5 && front < WALL_THRESHOLD_CM + 5) {
+               // Serial.println(left);
+                // Serial.writeln();
+           // }
+
+            if (front < WALL_THRESHOLD_CM + 10) {
+                stopMotors();
+                currentState = IDLE;
+                break;
+            }
 
             if (left > WALL_THRESHOLD_CM + 15) {
                 stopMotors();
@@ -113,10 +143,6 @@ void updateMotion() {
                 break;
             }
 
-            if (front < WALL_THRESHOLD_CM) {
-                stopMotors();
-                currentState = IDLE;
-            }
 
             stabilizeForward();
 
@@ -142,7 +168,7 @@ void updateMotion() {
         
         case TURNING_AROUND: 
 
-            if (front > WALL_THRESHOLD_CM) {
+            if (front > WALL_THRESHOLD_CM + 19) {
                 stopMotors();
                 currentState = IDLE;
             }

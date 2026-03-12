@@ -7,10 +7,10 @@
 void leftHandStep() {
 
     float front = getFrontDistance();
-    float left = getLeftDistance();
-    float right = getRightDistance();
+    float left = getLeftDistance(); 
+    float right = getRightDistance(); 
 
-    if (left > WALL_THRESHOLD_CM + 5) {
+    if (left > WALL_THRESHOLD_CM + 5) { 
 
         moveForwardShort();
         turnRight90();
@@ -23,7 +23,7 @@ void leftHandStep() {
         return;
     }
 
-    if (right > WALL_THRESHOLD_CM  + 5) {
+    if (right > WALL_THRESHOLD_CM  + 5) { 
 
         moveForwardShort();
         turnLeft90();
