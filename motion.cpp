@@ -127,7 +127,7 @@ void updateMotion() {
     float left = getLeftDistance();
     float right = getRightDistance();
 
-    if (currentState == MOVING_FORWARD && front < 7) {
+    if (currentState == MOVING_FORWARD && front < 7 && left < 10 && right < 10) {
         turnAround();
         return;
     }
@@ -137,6 +137,12 @@ void updateMotion() {
         case MOVING_FORWARD:
 
             if (getLeftDistance() > WALL_THRESHOLD_CM + 15) {
+                stopMotors();
+                currentState = IDLE;
+                break;
+            }
+
+            if (getRightDistance() > WALL_THRESHOLD_CM + 15) {
                 stopMotors();
                 currentState = IDLE;
                 break;
