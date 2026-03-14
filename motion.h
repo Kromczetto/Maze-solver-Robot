@@ -11,5 +11,6 @@ void turnAround();
 void updateMotion();
 void stabilizeForward();
 void moveForwardShort();
+void moveToCenter();
 
 #endif

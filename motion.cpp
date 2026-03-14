@@ -7,12 +7,25 @@
 enum RobotState {
     IDLE,
     MOVING_FORWARD,
+    MOVING_TO_CENTER,
     TURNING_LEFT,
     TURNING_RIGHT,
     TURNING_AROUND
 };
 
 static RobotState currentState = IDLE;
+
+enum PendingTurn {
+    NONE,
+    LEFT,
+    RIGHT
+};
+
+static PendingTurn pendingTurn = NONE;
+
+static unsigned long turnAroundStart = 0;
+static unsigned long turnStart = 0;
+static unsigned long centerStart = 0;
 
 bool isRobotIdle() {
     return currentState == IDLE;
@@ -21,34 +34,52 @@ bool isRobotIdle() {
 void moveForward() {
     leftMotorForward();
     rightMotorForward();
-
     currentState = MOVING_FORWARD;
-} 
+}
 
-void turnLeft90() {
-    leftMotorStop();
+void moveToCenter() {
+    leftMotorForward();
     rightMotorForward();
 
-    currentState = TURNING_LEFT;
+    centerStart = millis();
+    currentState = MOVING_TO_CENTER;
+}
+
+void turnLeft90() {
+
+    // leftMotorStop();
+    // rightMotorForward();
+    // turnStart = millis();
+    // currentState = TURNING_LEFT;
+
+    pendingTurn = LEFT;
+    moveToCenter();
 }
 
 void turnRight90() {
-    leftMotorForward();
-    rightMotorStop();
 
-    currentState = TURNING_RIGHT;
+    // leftMotorForward();
+    // rightMotorStop();
+    // turnStart = millis();
+    // currentState = TURNING_RIGHT;
+
+    pendingTurn = RIGHT;
+    moveToCenter();
 }
 
 void turnAround() {
     leftMotorBackward();
     rightMotorForward();
 
+    turnAroundStart = millis();
     currentState = TURNING_AROUND;
 }
 
 void stabilizeForward() {
+
+    if (currentState != MOVING_FORWARD) return;
+
     float left = getLeftDistance();
-    float right = getRightDistance();
     float front = getFrontDistance();
 
     if (front < 7) {
@@ -59,24 +90,22 @@ void stabilizeForward() {
 
     const float wallDetect = 12;
     const float target = 6.0;
-    const float tolerance = 2;
+    const float tolerance = 1.5;
 
-    if (left > wallDetect && right > wallDetect) {
-        leftMotorForward();
-        rightMotorForward();
+    if (left > wallDetect) {
         return;
     }
 
-    if (((left < target - tolerance) && (front > 10)) || ((right < target - tolerance) && (front > 10))) {
+    if (left < target - tolerance) {
         leftMotorStop();
         rightMotorForward();
     }
 
-    else if (((left > target + tolerance) && (front > 10)) || ((right > target + tolerance) && (front > 10))) {
+    else if (left > target + tolerance) {
         leftMotorForward();
         rightMotorStop();
     }
-    
+
     else {
         leftMotorForward();
         rightMotorForward();
@@ -90,7 +119,7 @@ void moveForwardShort() {
     leftMotorForward();
     rightMotorForward();
 
-    while (millis() - start < 300) {
+    while (millis() - start < 350) {
         updateMotion();
     }
 
@@ -98,59 +127,73 @@ void moveForwardShort() {
 }
 
 void updateMotion() {
-    
+
     if (currentState == IDLE) return;
-    
+
     float front = getFrontDistance();
     float left = getLeftDistance();
     float right = getRightDistance();
-    
-    if (front < 7) {
-        stopMotors();
-        currentState = IDLE;
+
+    if (currentState == MOVING_FORWARD && front < 7) {
+        turnAround();
         return;
     }
 
     switch (currentState) {
+
         case MOVING_FORWARD:
 
-            // if (left < WALL_THRESHOLD_CM + 5 && right < WALL_THRESHOLD_CM + 5 && front < WALL_THRESHOLD_CM + 5) {
+            if (getLeftDistance() > WALL_THRESHOLD_CM + 15) {
+                stopMotors();
+                currentState = IDLE;
+                break;
+            }
+
+            stabilizeForward();
+            break;
+
+        case MOVING_TO_CENTER:
+
+            // if (getFrontDistance() < 10) {
             //     stopMotors();
             //     currentState = IDLE;
             //     break;
             // }
-           // Serial.println(front);
-            //if (left < WALL_THRESHOLD_CM + 5 && right < WALL_THRESHOLD_CM + 5 && front < WALL_THRESHOLD_CM + 5) {
-               // Serial.println(left);
-                // Serial.writeln();
-           // }
 
-            if (front < WALL_THRESHOLD_CM + 10) {
-                stopMotors();
-                currentState = IDLE;
-                break;
+            if (millis() - centerStart > 200) {
+
+                if (pendingTurn == LEFT) {
+                    leftMotorStop();
+                    rightMotorForward();
+
+                    turnStart = millis();
+                    currentState = TURNING_LEFT;
+                }
+                else if (pendingTurn == RIGHT) {
+                    leftMotorForward();
+                    rightMotorStop();
+
+                    turnStart = millis();
+                    currentState = TURNING_RIGHT;
+                }
+                else {
+                    stopMotors();
+                    currentState = IDLE;
+                }
+
+                pendingTurn = NONE;
             }
-
-            if (left > WALL_THRESHOLD_CM + 15) {
-                stopMotors();
-                currentState = IDLE;
-                break;
-            }
-
-            if (right > WALL_THRESHOLD_CM + 15) {
-                stopMotors();
-                currentState = IDLE;
-                break;
-            }
-
-
-            stabilizeForward();
 
         break;
 
         case TURNING_LEFT:
-            
-            if (right < 8 && front > WALL_THRESHOLD_CM + 25) {
+
+            // if (getLeftDistance() > 10) {
+            //     rightMotorForward();
+            //     leftMotorStop();
+            // }
+
+            if (millis() - turnStart > 1000) {
                 stopMotors();
                 currentState = IDLE;
             }
@@ -158,24 +201,24 @@ void updateMotion() {
         break;
 
         case TURNING_RIGHT:
-            
-            if (left < 8 && front > WALL_THRESHOLD_CM + 25) {
+
+            if (millis() - turnStart > 1000) {
                 stopMotors();
                 currentState = IDLE;
             }
-            
-        break;
-        
-        case TURNING_AROUND: 
 
-            if (front > WALL_THRESHOLD_CM + 19) {
+        break;
+
+        case TURNING_AROUND:
+
+            if (millis() - turnAroundStart > 2000) {
                 stopMotors();
                 currentState = IDLE;
             }
-        
+
         break;
 
-        default: 
+        default:
         break;
     }
 }

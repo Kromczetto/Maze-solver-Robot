@@ -12,7 +12,7 @@ void leftHandStep() {
 
     if (left > WALL_THRESHOLD_CM + 5) { 
 
-        moveForwardShort();
+        moveToCenter();
         turnRight90();
         return;
     }
@@ -25,7 +25,7 @@ void leftHandStep() {
 
     if (right > WALL_THRESHOLD_CM  + 5) { 
 
-        moveForwardShort();
+        moveToCenter();
         turnLeft90();
         return;
     }
