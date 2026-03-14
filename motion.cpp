@@ -32,12 +32,14 @@ bool isRobotIdle() {
 }
 
 void moveForward() {
+
     leftMotorForward();
     rightMotorForward();
     currentState = MOVING_FORWARD;
 }
 
 void moveToCenter() {
+
     leftMotorForward();
     rightMotorForward();
 
@@ -47,27 +49,18 @@ void moveToCenter() {
 
 void turnLeft90() {
 
-    // leftMotorStop();
-    // rightMotorForward();
-    // turnStart = millis();
-    // currentState = TURNING_LEFT;
-
     pendingTurn = LEFT;
     moveToCenter();
 }
 
 void turnRight90() {
 
-    // leftMotorForward();
-    // rightMotorStop();
-    // turnStart = millis();
-    // currentState = TURNING_RIGHT;
-
     pendingTurn = RIGHT;
     moveToCenter();
 }
 
 void turnAround() {
+
     leftMotorBackward();
     rightMotorForward();
 
@@ -154,13 +147,7 @@ void updateMotion() {
 
         case MOVING_TO_CENTER:
 
-            // if (getFrontDistance() < 10) {
-            //     stopMotors();
-            //     currentState = IDLE;
-            //     break;
-            // }
-
-            if (millis() - centerStart > 200) {
+            if (millis() - centerStart > 300) {
 
                 if (pendingTurn == LEFT) {
                     leftMotorStop();
@@ -187,11 +174,6 @@ void updateMotion() {
         break;
 
         case TURNING_LEFT:
-
-            // if (getLeftDistance() > 10) {
-            //     rightMotorForward();
-            //     leftMotorStop();
-            // }
 
             if (millis() - turnStart > 1000) {
                 stopMotors();
