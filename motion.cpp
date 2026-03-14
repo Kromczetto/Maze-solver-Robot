@@ -90,7 +90,7 @@ void moveForwardShort() {
     leftMotorForward();
     rightMotorForward();
 
-    while (millis() - start < 200) {
+    while (millis() - start < 300) {
         updateMotion();
     }
 
