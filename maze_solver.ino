@@ -8,14 +8,58 @@
 
 SoftwareSerial SUART(12, 13);
 
+bool robotEnabled = true;
+
 unsigned long lastTelemetry = 0;
 const int TELEMETRY_INTERVAL = 200;
 
 const char* getStateString() {
 
-    if (isRobotIdle()) return "IDLE";
+    switch (getRobotState()) {
 
-    return "MOVING";
+        case IDLE:
+            return "IDLE";
+
+        case MOVING_FORWARD:
+            return "FORWARD";
+
+        case MOVING_TO_CENTER:
+            return "CENTER";     
+
+        case TURNING_LEFT:
+            return "LEFT";
+
+        case TURNING_RIGHT:
+            return "RIGHT";
+
+        case TURNING_AROUND:
+            return "AROUND";
+    }
+
+    return "UNKNOWN";
+}
+
+void readBLECommands() {
+
+    while (SUART.available()) {
+
+        char c = SUART.read();
+
+        if (c == 'S') {     // STOP
+
+            robotEnabled = false;
+            stopMotors();
+
+            Serial.println("Robot STOP");
+        }
+
+        if (c == 'R') {     // RESUME
+
+            robotEnabled = true;
+
+            Serial.println("Robot START");
+        }
+    }
 }
 
 void sendTelemetry() {
@@ -55,17 +99,21 @@ void setup() {
 }
 
 void loop() {
+    readBLECommands();
 
-    updateMotion();
+    if (robotEnabled) {
+        updateMotion();
 
-    if (isRobotIdle()) {
+        if (isRobotIdle()) {
 
-        leftHandStep();
+            leftHandStep();
+        }        
+        
+      if (millis() - lastTelemetry > TELEMETRY_INTERVAL) {
+
+          sendTelemetry();
+          lastTelemetry = millis();
+      }
     }
 
-    if (millis() - lastTelemetry > TELEMETRY_INTERVAL) {
-
-        sendTelemetry();
-        lastTelemetry = millis();
-    }
 }

@@ -4,15 +4,6 @@
 #include "ultrasonic.h"
 #include "robot_config.h"
 
-enum RobotState {
-    IDLE,
-    MOVING_FORWARD,
-    MOVING_TO_CENTER,
-    TURNING_LEFT,
-    TURNING_RIGHT,
-    TURNING_AROUND
-};
-
 static RobotState currentState = IDLE;
 
 enum PendingTurn {
@@ -30,6 +21,10 @@ static unsigned long forwardStart = 0;
 
 bool isRobotIdle() {
     return currentState == IDLE;
+}
+
+RobotState getRobotState() {
+    return currentState;
 }
 
 void moveForward() {
@@ -146,15 +141,15 @@ void updateMotion() {
             if (millis() - centerStart > 300) {
 
                 if (pendingTurn == LEFT) {
-                    leftMotorStop();
-                    rightMotorForward();
+                    rightMotorStop();
+                    leftMotorForward();
 
                     turnStart = millis();
                     currentState = TURNING_LEFT;
                 }
                 else if (pendingTurn == RIGHT) {
-                    leftMotorForward();
-                    rightMotorStop();
+                    rightMotorForward();
+                    leftMotorStop();
 
                     turnStart = millis();
                     currentState = TURNING_RIGHT;
