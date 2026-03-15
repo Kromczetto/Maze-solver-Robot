@@ -10,9 +10,6 @@
 #define TRIG_RIGHT 7
 #define ECHO_RIGHT 6
 
-#define TRIG_BACK 13
-#define ECHO_BACK 12
-
 void initSensors() {
     pinMode(TRIG_FRONT, OUTPUT);
     pinMode(ECHO_FRONT, INPUT);
@@ -22,9 +19,6 @@ void initSensors() {
     
     pinMode(TRIG_RIGHT, OUTPUT);
     pinMode(ECHO_RIGHT, INPUT);
-    
-    pinMode(TRIG_BACK, OUTPUT);
-    pinMode(ECHO_BACK, INPUT);
 }
 
 static float median3(float a, float b, float c) {
@@ -80,8 +74,4 @@ float getLeftDistance() {
 
 float getRightDistance() {
     return readDistance(TRIG_RIGHT, ECHO_RIGHT);
-}
-
-float getBackDistance() {
-    return readDistance(TRIG_BACK, ECHO_BACK);
 }

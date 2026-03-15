@@ -26,6 +26,7 @@ static PendingTurn pendingTurn = NONE;
 static unsigned long turnAroundStart = 0;
 static unsigned long turnStart = 0;
 static unsigned long centerStart = 0;
+static unsigned long forwardStart = 0;
 
 bool isRobotIdle() {
     return currentState == IDLE;
@@ -35,6 +36,8 @@ void moveForward() {
 
     leftMotorForward();
     rightMotorForward();
+
+    forwardStart = millis();
     currentState = MOVING_FORWARD;
 }
 
@@ -68,17 +71,18 @@ void turnAround() {
     currentState = TURNING_AROUND;
 }
 
-void stabilizeForward() {
+void stabilizeForward(float left, float front) {
 
     if (currentState != MOVING_FORWARD) return;
 
-    float left = getLeftDistance();
-    float front = getFrontDistance();
+    if (millis() - forwardStart > 250) {
+        
+        if (front < 7) {
+            stopMotors();
+            currentState = IDLE;
+            return;
+        }
 
-    if (front < 7) {
-        stopMotors();
-        currentState = IDLE;
-        return;
     }
 
     const float wallDetect = 12;
@@ -105,20 +109,6 @@ void stabilizeForward() {
     }
 }
 
-void moveForwardShort() {
-
-    unsigned long start = millis();
-
-    leftMotorForward();
-    rightMotorForward();
-
-    while (millis() - start < 350) {
-        updateMotion();
-    }
-
-    stopMotors();
-}
-
 void updateMotion() {
 
     if (currentState == IDLE) return;
@@ -136,19 +126,19 @@ void updateMotion() {
 
         case MOVING_FORWARD:
 
-            if (getLeftDistance() > WALL_THRESHOLD_CM + 15) {
+            if (getLeftDistance() > WALL_THRESHOLD_CM + 15 && getFrontDistance > WALL_THRESHOLD_CM + 15) {
                 stopMotors();
                 currentState = IDLE;
                 break;
             }
 
-            if (getRightDistance() > WALL_THRESHOLD_CM + 15) {
+            if (getRightDistance() > WALL_THRESHOLD_CM + 15 && getFrontDistance > WALL_THRESHOLD_CM + 15) {
                 stopMotors();
                 currentState = IDLE;
                 break;
             }
 
-            stabilizeForward();
+            stabilizeForward(left, front);
             break;
 
         case MOVING_TO_CENTER:

@@ -9,8 +9,7 @@ void turnRight90();
 void turnAround();
 
 void updateMotion();
-void stabilizeForward();
-void moveForwardShort();
+void stabilizeForward(float left, float front);
 void moveToCenter();
 
 #endif

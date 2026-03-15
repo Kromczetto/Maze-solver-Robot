@@ -6,6 +6,5 @@ void initSensors();
 float getFrontDistance();
 float getLeftDistance();
 float getRightDistance();
-float getBackDistance();
 
 #endif 
