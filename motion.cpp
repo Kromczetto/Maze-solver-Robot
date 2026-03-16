@@ -19,6 +19,8 @@ static unsigned long turnStart = 0;
 static unsigned long centerStart = 0;
 static unsigned long forwardStart = 0;
 
+static unsigned long ignoreJunctionUntil = 0;
+
 bool isRobotIdle() {
     return currentState == IDLE;
 }
@@ -71,13 +73,12 @@ void stabilizeForward(float left, float front) {
     if (currentState != MOVING_FORWARD) return;
 
     if (millis() - forwardStart > 250) {
-        
+
         if (front < 7) {
             stopMotors();
             currentState = IDLE;
             return;
         }
-
     }
 
     const float wallDetect = 12;
@@ -92,12 +93,10 @@ void stabilizeForward(float left, float front) {
         leftMotorStop();
         rightMotorForward();
     }
-
     else if (left > target + tolerance) {
         leftMotorForward();
         rightMotorStop();
     }
-
     else {
         leftMotorForward();
         rightMotorForward();
@@ -112,7 +111,9 @@ void updateMotion() {
     float left = getLeftDistance();
     float right = getRightDistance();
 
-    if (currentState == MOVING_FORWARD && front < 7 && left < 10 && right < 10) {
+    bool ignoreJunction = millis() < ignoreJunctionUntil;
+
+    if (!ignoreJunction && currentState == MOVING_FORWARD && front < 7 && left < 10 && right < 10) {
         turnAround();
         return;
     }
@@ -121,13 +122,13 @@ void updateMotion() {
 
         case MOVING_FORWARD:
 
-            if (getLeftDistance() > WALL_THRESHOLD_CM + 15) {
+            if (!ignoreJunction && getLeftDistance() > WALL_THRESHOLD_CM + 15) {
                 stopMotors();
                 currentState = IDLE;
                 break;
             }
 
-            if (getRightDistance() > WALL_THRESHOLD_CM + 15) {
+            if (!ignoreJunction && getRightDistance() > WALL_THRESHOLD_CM + 15) {
                 stopMotors();
                 currentState = IDLE;
                 break;
@@ -138,18 +139,20 @@ void updateMotion() {
 
         case MOVING_TO_CENTER:
 
-            if (millis() - centerStart > 300) {
+            if (millis() - centerStart > 700) {
 
                 if (pendingTurn == LEFT) {
-                    rightMotorStop();
+
                     leftMotorForward();
+                    rightMotorBackward();
 
                     turnStart = millis();
                     currentState = TURNING_LEFT;
                 }
                 else if (pendingTurn == RIGHT) {
+
                     rightMotorForward();
-                    leftMotorStop();
+                    leftMotorBackward();
 
                     turnStart = millis();
                     currentState = TURNING_RIGHT;
@@ -166,8 +169,9 @@ void updateMotion() {
 
         case TURNING_LEFT:
 
-            if (millis() - turnStart > 1000) {
+            if (millis() - turnStart > 550) {
                 stopMotors();
+                ignoreJunctionUntil = millis() + 500;
                 currentState = IDLE;
             }
 
@@ -175,8 +179,9 @@ void updateMotion() {
 
         case TURNING_RIGHT:
 
-            if (millis() - turnStart > 1000) {
+            if (millis() - turnStart > 550) {
                 stopMotors();
+                ignoreJunctionUntil = millis() + 500;
                 currentState = IDLE;
             }
 
@@ -186,6 +191,7 @@ void updateMotion() {
 
             if (millis() - turnAroundStart > 2000) {
                 stopMotors();
+                ignoreJunctionUntil = millis() + 250;
                 currentState = IDLE;
             }
 
