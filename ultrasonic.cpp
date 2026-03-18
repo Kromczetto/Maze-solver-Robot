@@ -10,6 +10,14 @@
 #define TRIG_RIGHT 7
 #define ECHO_RIGHT 6
 
+// 0.0 - brak filtracji
+// 1.0 - bardzo wolna reakcja
+#define EMA_ALPHA 0.5
+
+static float frontFiltered = 0;
+static float leftFiltered = 0;
+static float rightFiltered = 0;
+
 void initSensors() {
     pinMode(TRIG_FRONT, OUTPUT);
     pinMode(ECHO_FRONT, INPUT);
@@ -21,57 +29,63 @@ void initSensors() {
     pinMode(ECHO_RIGHT, INPUT);
 }
 
-static float median3(float a, float b, float c) {
+static float measureRaw(int trigPin, int echoPin) {
 
-    if (a > b) { float t = a; a = b; b = t; }
-    if (b > c) { float t = b; b = c; c = t; }
-    if (a > b) { float t = a; a = b; b = t; }
+    digitalWrite(trigPin, LOW);
+    delayMicroseconds(2);
 
-    return b;
+    digitalWrite(trigPin, HIGH);
+    delayMicroseconds(10);
+    digitalWrite(trigPin, LOW);
+
+    long duration = pulseIn(echoPin, HIGH, 20000);
+
+    float distance = duration * 0.0343 / 2.0;
+
+    if (distance == 0 || distance > 200) {
+        distance = 200;
+    }
+
+    return distance;
 }
 
-static float readDistance(int trigPin, int echoPin) {
-    float d1, d2, d3;
-
-    auto measure = [&](void) {
-
-        digitalWrite(trigPin, LOW);
-        delayMicroseconds(2);
-
-        digitalWrite(trigPin, HIGH);
-        delayMicroseconds(10);
-        digitalWrite(trigPin, LOW);
-
-        long duration = pulseIn(echoPin, HIGH, 20000);
-
-        float distance = duration * 0.0343 / 2.0;
-
-        if (distance == 0 || distance > 200) {
-            distance = 200;
-        }
-
-        return distance;
-    };
-
-    d1 = measure();
-    delay(2);
-
-    d2 = measure();
-    delay(2);
-
-    d3 = measure();
-
-    return median3(d1, d2, d3);
+// EMA: new = alpha * prev + (1 - alpha) * measurement
+static float applyEMA(float prev, float measurement) {
+    return EMA_ALPHA * prev + (1.0 - EMA_ALPHA) * measurement;
 }
 
 float getFrontDistance() {
-    return readDistance(TRIG_FRONT, ECHO_FRONT);
+    float raw = measureRaw(TRIG_FRONT, ECHO_FRONT);
+
+    if (frontFiltered == 0) {
+        frontFiltered = raw; // inicjalizacja
+    } else {
+        frontFiltered = applyEMA(frontFiltered, raw);
+    }
+
+    return frontFiltered;
 }
 
 float getLeftDistance() {
-    return readDistance(TRIG_LEFT, ECHO_LEFT);
+    float raw = measureRaw(TRIG_LEFT, ECHO_LEFT);
+
+    if (leftFiltered == 0) {
+        leftFiltered = raw;
+    } else {
+        leftFiltered = applyEMA(leftFiltered, raw);
+    }
+
+    return leftFiltered;
 }
 
 float getRightDistance() {
-    return readDistance(TRIG_RIGHT, ECHO_RIGHT);
+    float raw = measureRaw(TRIG_RIGHT, ECHO_RIGHT);
+
+    if (rightFiltered == 0) {
+        rightFiltered = raw;
+    } else {
+        rightFiltered = applyEMA(rightFiltered, raw);
+    }
+
+    return rightFiltered;
 }
