@@ -1,25 +1,18 @@
 #include <Arduino.h>
 #include "motion.h"
 #include "motors.h"
-#include "ultrasonic.h"
-#include "robot_config.h"
+#include "tof_sensors.h"
+
+#define TURN_TIME 130
+#define BACK_TIME 220
+
+#define FRONT_WALL 12
+
+#define CENTER_MIN 8
+#define CENTER_MAX 12
 
 static RobotState currentState = IDLE;
-
-enum PendingTurn {
-    NONE,
-    LEFT,
-    RIGHT
-};
-
-static PendingTurn pendingTurn = NONE;
-
-static unsigned long turnAroundStart = 0;
-static unsigned long turnStart = 0;
-static unsigned long centerStart = 0;
-static unsigned long forwardStart = 0;
-
-static unsigned long ignoreJunctionUntil = 0;
+static unsigned long stateStartTime = 0;
 
 bool isRobotIdle() {
     return currentState == IDLE;
@@ -29,175 +22,112 @@ RobotState getRobotState() {
     return currentState;
 }
 
-void moveForward() {
-
-    leftMotorForward();
-    rightMotorForward();
-
-    forwardStart = millis();
-    currentState = MOVING_FORWARD;
+static void setState(RobotState newState) {
+    currentState = newState;
+    stateStartTime = millis();
 }
 
-void moveToCenter() {
-
-    leftMotorForward();
-    rightMotorForward();
-
-    centerStart = millis();
-    currentState = MOVING_TO_CENTER;
+void moveForward() {
+    setState(MOVING_FORWARD);
 }
 
 void turnLeft90() {
-
-    pendingTurn = LEFT;
-    moveToCenter();
+    stopMotors();
+    delay(50);
+    setState(TURNING_LEFT);
 }
 
 void turnRight90() {
-
-    pendingTurn = RIGHT;
-    moveToCenter();
+    stopMotors();
+    delay(50);
+    setState(TURNING_RIGHT);
 }
 
 void turnAround() {
-
-    leftMotorBackward();
-    rightMotorForward();
-
-    turnAroundStart = millis();
-    currentState = TURNING_AROUND;
+    stopMotors();
+    delay(50);
+    setState(TURNING_AROUND);
 }
 
-void stabilizeForward(float left, float front) {
+void stabilizeForward() {
+    float left = getLeftDistance();
 
-    if (currentState != MOVING_FORWARD) return;
+    if (left < CENTER_MIN) {
 
-    if (millis() - forwardStart > 250) {
-
-        if (front < 7) {
-            stopMotors();
-            currentState = IDLE;
-            return;
-        }
-    }
-
-    const float wallDetect = 12;
-    const float target = 6.0;
-    const float tolerance = 1.5;
-
-    if (left > wallDetect) {
-        return;
-    }
-
-    if (left < target - tolerance) {
         leftMotorStop();
         rightMotorForward();
-    }
-    else if (left > target + tolerance) {
+    } 
+    else if (left > CENTER_MAX) {
+
         leftMotorForward();
         rightMotorStop();
-    }
+    } 
     else {
         leftMotorForward();
         rightMotorForward();
     }
 }
 
+void moveToCenter() {
+    stabilizeForward();
+}
+
 void updateMotion() {
 
-    if (currentState == IDLE) return;
-
     float front = getFrontDistance();
-    float left = getLeftDistance();
-    float right = getRightDistance();
-
-    bool ignoreJunction = millis() < ignoreJunctionUntil;
-
-    if (!ignoreJunction && currentState == MOVING_FORWARD && front < 7 && left < 10 && right < 10) {
-        turnAround();
-        return;
-    }
 
     switch (currentState) {
 
-        case MOVING_FORWARD:
-
-            if (!ignoreJunction && getLeftDistance() > WALL_THRESHOLD_CM + 15) {
-                stopMotors();
-                currentState = IDLE;
-                break;
-            }
-
-            if (!ignoreJunction && getRightDistance() > WALL_THRESHOLD_CM + 15) {
-                stopMotors();
-                currentState = IDLE;
-                break;
-            }
-
-            stabilizeForward(left, front);
-            break;
-
-        case MOVING_TO_CENTER:
-
-            if (millis() - centerStart > 700) {
-
-                if (pendingTurn == LEFT) {
-
-                    leftMotorForward();
-                    rightMotorBackward();
-
-                    turnStart = millis();
-                    currentState = TURNING_LEFT;
-                }
-                else if (pendingTurn == RIGHT) {
-
-                    rightMotorForward();
-                    leftMotorBackward();
-
-                    turnStart = millis();
-                    currentState = TURNING_RIGHT;
-                }
-                else {
-                    stopMotors();
-                    currentState = IDLE;
-                }
-
-                pendingTurn = NONE;
-            }
-
+        case IDLE:
+   
+            stopMotors();
         break;
 
-        case TURNING_LEFT:
-
-            if (millis() - turnStart > 550) {
+        case MOVING_FORWARD:
+       
+            if (front < FRONT_WALL) {
                 stopMotors();
-                ignoreJunctionUntil = millis() + 500;
                 currentState = IDLE;
+                break;
             }
 
+            stabilizeForward();
+        
+        break;
+
+       
+        case TURNING_LEFT:
+
+            leftMotorForward();
+            rightMotorBackward();
+
+            if (millis() - stateStartTime > TURN_TIME) {
+                setState(IDLE);
+            }
+        
         break;
 
         case TURNING_RIGHT:
+    
+        
+            leftMotorBackward();
+            rightMotorForward();
 
-            if (millis() - turnStart > 550) {
-                stopMotors();
-                ignoreJunctionUntil = millis() + 500;
-                currentState = IDLE;
+            if (millis() - stateStartTime > TURN_TIME) {
+                setState(IDLE);
             }
-
+        
         break;
 
         case TURNING_AROUND:
+        
+            leftMotorBackward();
+            rightMotorForward();
 
-            if (millis() - turnAroundStart > 2000) {
-                stopMotors();
-                ignoreJunctionUntil = millis() + 250;
-                currentState = IDLE;
+            if (millis() - stateStartTime > BACK_TIME) {
+                setState(IDLE);
             }
-
-        break;
-
-        default:
+        
         break;
     }
 }

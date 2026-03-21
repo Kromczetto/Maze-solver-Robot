@@ -1,8 +1,6 @@
 #ifndef ROBOT_CONFIG_H
 #define ROBOT_CONFIG_H
 
-#define CELL_DISTANCE_CM 25
-#define WALL_THRESHOLD_CM 5
-
+#define WALL_THRESHOLD_CM 10
 
 #endif

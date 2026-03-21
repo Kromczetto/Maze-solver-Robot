@@ -3,16 +3,23 @@
 
 #define LEFT_IN1 3
 #define LEFT_IN2 2
-
 #define RIGHT_IN1 5
 #define RIGHT_IN2 4
+
+#define ENA 11
+#define ENB 6
 
 void initMotors() {
     pinMode(LEFT_IN1, OUTPUT);
     pinMode(LEFT_IN2, OUTPUT);
-
     pinMode(RIGHT_IN1, OUTPUT);
     pinMode(RIGHT_IN2, OUTPUT);
+    
+    pinMode(ENA, OUTPUT);
+    pinMode(ENB, OUTPUT);
+
+    analogWrite(ENA, 255); 
+    analogWrite(ENB, 255);
 }
 
 void leftMotorForward() {

@@ -1,31 +1,26 @@
 #include "left_hand.h"
 #include "motion.h"
-#include "ultrasonic.h"
-#include "robot_config.h"
-#include "motion.h"
+#include "tof_sensors.h"
 
 void leftHandStep() {
 
+    if (!isRobotIdle()) return;
+
     float front = getFrontDistance();
-    float left = getLeftDistance(); 
-    float right = getRightDistance(); 
+    float left  = getLeftDistance();
+    float right = getRightDistance();
 
-    if (left > WALL_THRESHOLD_CM + 5) { 
-
-        moveToCenter();
+    if (left > 30) {
         turnLeft90();
         return;
     }
 
-    if (front > WALL_THRESHOLD_CM + 5) {
-
+    if (front > 15) {
         moveForward();
         return;
     }
 
-    if (right > WALL_THRESHOLD_CM  + 5) { 
-
-        moveToCenter();
+    if (right > 30) {
         turnRight90();
         return;
     }
