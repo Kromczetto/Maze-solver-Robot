@@ -6,8 +6,13 @@ enum RobotState {
     MOVING_FORWARD,
     TURNING_LEFT,
     TURNING_RIGHT,
-    TURNING_AROUND
+    TURNING_AROUND,
+    ENTERING_CELL,
+    ALIGN_AFTER_TURN
 };
+
+extern RobotState currentState;
+extern RobotState pendingTurn;
 
 bool isRobotIdle();
 RobotState getRobotState();
@@ -18,7 +23,6 @@ void turnRight90();
 void turnAround();
 
 void updateMotion();
-void moveToCenter();
 void stabilizeForward();
 
 #endif

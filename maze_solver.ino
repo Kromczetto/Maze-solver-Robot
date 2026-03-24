@@ -17,7 +17,6 @@ const char* getStateString() {
     switch (getRobotState()) {
         case IDLE: return "IDLE";
         case MOVING_FORWARD: return "FORWARD";
-        // case MOVING_TO_CENTER: return "CENTER";
         case TURNING_LEFT: return "LEFT";
         case TURNING_RIGHT: return "RIGHT";
         case TURNING_AROUND: return "AROUND";
@@ -41,21 +40,10 @@ void readBLECommands() {
 }
 
 void sendTelemetry() {
-    int front = (int)getFrontDistance();
-    int left  = (int)getLeftDistance();
-    int right = (int)getRightDistance();
-
-    const char* state = getStateString();
-
-    SUART.print(front); SUART.print(",");
-    SUART.print(left);  SUART.print(",");
-    SUART.print(right); SUART.print(",");
-    SUART.println(state);
-
-    Serial.print(front); Serial.print(",");
-    Serial.print(left);  Serial.print(",");
-    Serial.print(right); Serial.print(",");
-    Serial.println(state);
+    Serial.print((int)getFrontDistance()); Serial.print(",");
+    Serial.print((int)getLeftDistance());  Serial.print(",");
+    Serial.print((int)getRightDistance()); Serial.print(",");
+    Serial.println(getStateString());
 }
 
 void setup() {

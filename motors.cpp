@@ -14,12 +14,12 @@ void initMotors() {
     pinMode(LEFT_IN2, OUTPUT);
     pinMode(RIGHT_IN1, OUTPUT);
     pinMode(RIGHT_IN2, OUTPUT);
-    
+
     pinMode(ENA, OUTPUT);
     pinMode(ENB, OUTPUT);
 
-    analogWrite(ENA, 255); 
-    analogWrite(ENB, 255);
+    analogWrite(ENA, 100);
+    analogWrite(ENB, 100);
 }
 
 void leftMotorForward() {

@@ -11,6 +11,29 @@ VL53L0X sensorRight;
 VL53L0X sensorFront;
 VL53L0X sensorLeft;
 
+float median3(float a, float b, float c) {
+    if (a > b) { float t = a; a = b; b = t; }
+    if (b > c) { float t = b; b = c; c = t; }
+    if (a > b) { float t = a; a = b; b = t; }
+    return b;
+}
+
+float filterDistance(uint16_t d) {
+    if (d == 0 || d == 65535 || d > 2000) {
+        return 200; 
+    }
+    return d / 10.0;
+}
+
+float readSensor(VL53L0X &sensor) {
+
+    float d1 = filterDistance(sensor.readRangeContinuousMillimeters());
+    float d2 = filterDistance(sensor.readRangeContinuousMillimeters());
+    float d3 = filterDistance(sensor.readRangeContinuousMillimeters());
+
+    return median3(d1, d2, d3);
+}
+
 void initSensors() {
 
     Wire.begin();
@@ -27,60 +50,27 @@ void initSensors() {
     digitalWrite(XSHUT_RIGHT, HIGH);
     delay(100);
 
-    if (!sensorRight.init()) {
-        Serial.println("RIGHT FAIL");
-    } else {
-        sensorRight.setAddress(0x30);
-        sensorRight.setTimeout(50);
-        sensorRight.startContinuous();
-        Serial.println("RIGHT OK");
-    }
+    sensorRight.init();
+    sensorRight.setAddress(0x30);
+    sensorRight.startContinuous();
 
     digitalWrite(XSHUT_FRONT, HIGH);
     delay(100);
 
-    if (!sensorFront.init()) {
-        Serial.println("FRONT FAIL");
-    } else {
-        sensorFront.setAddress(0x31);
-        sensorFront.setTimeout(50);
-        sensorFront.startContinuous();
-        Serial.println("FRONT OK");
-    }
+    sensorFront.init();
+    sensorFront.setAddress(0x31);
+    sensorFront.startContinuous();
 
     digitalWrite(XSHUT_LEFT, HIGH);
     delay(100);
 
-    if (!sensorLeft.init()) {
-        Serial.println("LEFT FAIL");
-    } else {
-        sensorLeft.setAddress(0x32);
-        sensorLeft.setTimeout(50);
-        sensorLeft.startContinuous();
-        Serial.println("LEFT OK");
-    }
+    sensorLeft.init();
+    sensorLeft.setAddress(0x32);
+    sensorLeft.startContinuous();
 
     Serial.println("ToF INIT DONE");
 }
 
-float readSensor(VL53L0X &sensor) {
-    uint16_t d = sensor.readRangeContinuousMillimeters();
-
-    if (sensor.timeoutOccurred() || d == 65535 || d == 0) {
-        return 200; 
-    }
-
-    return d / 10.0; 
-}
-
-float getFrontDistance() {
-    return readSensor(sensorFront);
-}
-
-float getLeftDistance() {
-    return readSensor(sensorLeft);
-}
-
-float getRightDistance() {
-    return readSensor(sensorRight);
-}
+float getFrontDistance() { return readSensor(sensorFront); }
+float getLeftDistance()  { return readSensor(sensorLeft); }
+float getRightDistance() { return readSensor(sensorRight); }

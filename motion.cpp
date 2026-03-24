@@ -3,15 +3,14 @@
 #include "motors.h"
 #include "tof_sensors.h"
 
-#define TURN_TIME 130
-#define BACK_TIME 220
+#define FRONT_STOP 10
+#define ENTER_TIME 120
+#define TURN_TIME 260
+#define ALIGN_TIME 180
 
-#define FRONT_WALL 12
+RobotState currentState = IDLE;
+RobotState pendingTurn = IDLE;
 
-#define CENTER_MIN 8
-#define CENTER_MAX 12
-
-static RobotState currentState = IDLE;
 static unsigned long stateStartTime = 0;
 
 bool isRobotIdle() {
@@ -32,102 +31,137 @@ void moveForward() {
 }
 
 void turnLeft90() {
-    stopMotors();
-    delay(50);
     setState(TURNING_LEFT);
 }
 
 void turnRight90() {
-    stopMotors();
-    delay(50);
     setState(TURNING_RIGHT);
 }
 
 void turnAround() {
-    stopMotors();
-    delay(50);
     setState(TURNING_AROUND);
 }
 
 void stabilizeForward() {
-    float left = getLeftDistance();
 
-    if (left < CENTER_MIN) {
+    float front = getFrontDistance();
 
-        leftMotorStop();
+    if (front <= FRONT_STOP) {
+        stopMotors();
+        setState(IDLE);
+        return;
+    }
+
+    float left  = getLeftDistance();
+    float right = getRightDistance();
+
+    float error = left - right;
+
+    if (abs(error) < 3) {
+        leftMotorForward();
         rightMotorForward();
-    } 
-    else if (left > CENTER_MAX) {
-
+    }
+    else if (error > 0) {
         leftMotorForward();
         rightMotorStop();
-    } 
+    }
     else {
-        leftMotorForward();
+        leftMotorStop();
         rightMotorForward();
     }
 }
 
-void moveToCenter() {
-    stabilizeForward();
-}
-
 void updateMotion() {
-
-    float front = getFrontDistance();
 
     switch (currentState) {
 
         case IDLE:
-   
             stopMotors();
         break;
 
         case MOVING_FORWARD:
-       
-            if (front < FRONT_WALL) {
-                stopMotors();
-                currentState = IDLE;
-                break;
-            }
-
             stabilizeForward();
-        
         break;
 
-       
-        case TURNING_LEFT:
-
+        case ENTERING_CELL:
+        {
             leftMotorForward();
-            rightMotorBackward();
+            rightMotorForward();
 
-            if (millis() - stateStartTime > TURN_TIME) {
-                setState(IDLE);
+            if (millis() - stateStartTime > ENTER_TIME) {
+
+                if (pendingTurn == TURNING_LEFT)
+                    setState(TURNING_LEFT);
+                else if (pendingTurn == TURNING_RIGHT)
+                    setState(TURNING_RIGHT);
+                else if (pendingTurn == TURNING_AROUND)
+                    setState(TURNING_AROUND);
+                else
+                    setState(MOVING_FORWARD);
+
+                pendingTurn = IDLE;
             }
-        
+        }
+        break;
+
+        case TURNING_LEFT:
+        {
+            if (millis() - stateStartTime < TURN_TIME) {
+                leftMotorForward();
+                rightMotorBackward();
+                return;
+            }
+            setState(ALIGN_AFTER_TURN);
+        }
         break;
 
         case TURNING_RIGHT:
-    
-        
-            leftMotorBackward();
-            rightMotorForward();
-
-            if (millis() - stateStartTime > TURN_TIME) {
-                setState(IDLE);
+        {
+            if (millis() - stateStartTime < TURN_TIME) {
+                leftMotorBackward();
+                rightMotorForward();
+                return;
             }
-        
+            setState(ALIGN_AFTER_TURN);
+        }
         break;
 
         case TURNING_AROUND:
-        
-            leftMotorBackward();
-            rightMotorForward();
-
-            if (millis() - stateStartTime > BACK_TIME) {
-                setState(IDLE);
+        {
+            if (millis() - stateStartTime < TURN_TIME * 2) {
+                leftMotorForward();
+                rightMotorBackward();
+                return;
             }
-        
+            setState(ALIGN_AFTER_TURN);
+        }
+        break;
+
+        case ALIGN_AFTER_TURN:
+        {
+            float left  = getLeftDistance();
+            float right = getRightDistance();
+
+            float error = left - right;
+
+            if (abs(error) < 2) {
+                leftMotorForward();
+                rightMotorForward();
+
+                if (millis() - stateStartTime > ALIGN_TIME) {
+                    setState(MOVING_FORWARD);
+                }
+                return;
+            }
+
+            if (error > 0) {
+                leftMotorForward();
+                rightMotorBackward();
+            } else {
+                leftMotorBackward();
+                rightMotorForward();
+            }
+        }
         break;
     }
 }
