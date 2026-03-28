@@ -4,15 +4,12 @@
 enum RobotState {
     IDLE,
     MOVING_FORWARD,
-    TURNING_LEFT,
     TURNING_RIGHT,
-    TURNING_AROUND,
-    ENTERING_CELL,
-    ALIGN_AFTER_TURN
+    TURNING_LEFT,
+    TURNING_AROUND
 };
 
 extern RobotState currentState;
-extern RobotState pendingTurn;
 
 bool isRobotIdle();
 RobotState getRobotState();

@@ -1,41 +1,46 @@
-#include "left_hand.h"
-#include "motion.h"
-#include "tof_sensors.h"
+// #include "left_hand.h"
+// #include "motion.h"
+// #include "tof_sensors.h"
 
-#define OPEN 30
+// #define OPEN 25
+// #define FRONT_BLOCK 15
 
-void leftHandStep() {
+// void leftHandStep() {
 
-    if (!isRobotIdle()) return;
+//     RobotState state = getRobotState();
 
-    float front = getFrontDistance();
-    float left  = getLeftDistance();
-    float right = getRightDistance();
+//     // nie przerywaj skrętu
+//     if (state == TURNING_LEFT || state == TURNING_RIGHT || state == TURNING_AROUND)
+//         return;
 
-    bool leftOpen  = left  > OPEN;
-    bool frontOpen = front > OPEN;
-    bool rightOpen = right > OPEN;
+//     float front = getFrontDistance();
+//     float left  = getLeftDistance();
+//     float right = getRightDistance();
 
-    if (!leftOpen && !frontOpen && !rightOpen) {
-        pendingTurn = TURNING_AROUND;
-        currentState = ENTERING_CELL;
-        return;
-    }
+//     bool leftOpen  = left  > OPEN;
+//     bool frontOpen = front > FRONT_BLOCK;
+//     bool rightOpen = right > OPEN;
 
-    if (leftOpen) {
-        pendingTurn = TURNING_LEFT;
-        currentState = ENTERING_CELL;
-        return;
-    }
+//     if (front < FRONT_BLOCK) {
 
-    if (frontOpen) {
-        moveForward();
-        return;
-    }
+//         if (leftOpen) {
+//             turnLeft90();
+//             return;
+//         }
 
-    if (rightOpen) {
-        pendingTurn = TURNING_RIGHT;
-        currentState = ENTERING_CELL;
-        return;
-    }
-}
+//         if (rightOpen) {
+//             turnRight90();
+//             return;
+//         }
+
+//         turnAround();
+//         return;
+//     }
+
+//     if (leftOpen) {
+//         turnLeft90();
+//         return;
+//     }
+
+//     moveForward();
+// }

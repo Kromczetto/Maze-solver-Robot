@@ -4,7 +4,8 @@
 #include "motors.h"
 #include "motion.h"
 #include "tof_sensors.h"
-#include "left_hand.h"
+// #include "left_hand.h"
+#include "mpu.h"
 
 SoftwareSerial SUART(12, 13);
 
@@ -24,8 +25,54 @@ const char* getStateString() {
     return "UNKNOWN";
 }
 
-void readBLECommands() {
-    while (SUART.available()) {
+// void readBLECommands() {
+//     while (SUART.available()) {
+//         char c = SUART.read();
+
+//         if (c == 'S') {
+//             robotEnabled = false;
+//             stopMotors();
+//         }
+
+//         if (c == 'R') {
+//             robotEnabled = true;
+//         }
+//     }
+// }
+
+void sendTelemetry() {
+
+    int front = (int)getFrontDistance();
+    int left  = (int)getLeftDistance();
+    int right = (int)getRightDistance();
+    int angle = (int)getAngle();
+
+    const char* state = getStateString();
+
+    SUART.print(front);
+    SUART.print(",");
+    SUART.print(left);
+    SUART.print(",");
+    SUART.print(right);
+    SUART.print(",");
+    SUART.print(angle);
+    SUART.print(",");
+    SUART.println(state);
+}
+
+void setup() {
+    Serial.begin(9600);
+    SUART.begin(9600);
+
+    initMotors();
+    initSensors();
+    initMPU(); 
+
+    Serial.println("START");
+}
+void loop() {
+
+    if (SUART.available()) {
         char c = SUART.read();
 
         if (c == 'S') {
@@ -35,39 +82,18 @@ void readBLECommands() {
 
         if (c == 'R') {
             robotEnabled = true;
+            currentState = MOVING_FORWARD;
+            resetAngle(); // 🔥 MUST HAVE
         }
     }
-}
-
-void sendTelemetry() {
-    Serial.print((int)getFrontDistance()); Serial.print(",");
-    Serial.print((int)getLeftDistance());  Serial.print(",");
-    Serial.print((int)getRightDistance()); Serial.print(",");
-    Serial.println(getStateString());
-}
-
-void setup() {
-    Serial.begin(9600);
-    SUART.begin(9600);
-
-    initMotors();
-    initSensors();
-
-    Serial.println("START");
-}
-
-void loop() {
-
-    readBLECommands();
 
     if (robotEnabled) {
-
-        leftHandStep();
+        updateGyro();
         updateMotion();
+    }
 
-        if (millis() - lastTelemetry > TELEMETRY_INTERVAL) {
-            sendTelemetry();
-            lastTelemetry = millis();
-        }
+    if (millis() - lastTelemetry > TELEMETRY_INTERVAL) {
+        sendTelemetry();
+        lastTelemetry = millis();
     }
 }

@@ -18,8 +18,8 @@ void initMotors() {
     pinMode(ENA, OUTPUT);
     pinMode(ENB, OUTPUT);
 
-    analogWrite(ENA, 100);
-    analogWrite(ENB, 100);
+    analogWrite(ENA, 200);
+    analogWrite(ENB, 200);
 }
 
 void leftMotorForward() {
