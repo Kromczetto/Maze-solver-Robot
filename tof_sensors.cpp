@@ -3,74 +3,113 @@
 #include <VL53L0X.h>
 #include "tof_sensors.h"
 
-#define XSHUT_RIGHT 8
 #define XSHUT_FRONT 9
-#define XSHUT_LEFT  10
-
-VL53L0X sensorRight;
 VL53L0X sensorFront;
-VL53L0X sensorLeft;
 
-float median3(float a, float b, float c) {
-    if (a > b) { float t = a; a = b; b = t; }
-    if (b > c) { float t = b; b = c; c = t; }
-    if (a > b) { float t = a; a = b; b = t; }
-    return b;
-}
+#define TRIG_LEFT  A0
+#define ECHO_LEFT  A1
+
+#define TRIG_RIGHT 8
+#define ECHO_RIGHT 7
 
 float filterDistance(uint16_t d) {
-    if (d == 0 || d == 65535 || d > 2000) {
-        return 200; 
-    }
+
+    if (d == 0 || d == 65535 || d > 2000) return 100;
     return d / 10.0;
+
 }
 
-float readSensor(VL53L0X &sensor) {
+float readFrontTOF() {
 
-    float d1 = filterDistance(sensor.readRangeContinuousMillimeters());
-    float d2 = filterDistance(sensor.readRangeContinuousMillimeters());
-    float d3 = filterDistance(sensor.readRangeContinuousMillimeters());
+    uint16_t d = sensorFront.readRangeContinuousMillimeters();
+    if (sensorFront.timeoutOccurred()) return 100;
+    return filterDistance(d);
 
-    return median3(d1, d2, d3);
 }
+
+float readUltrasonic(int trig, int echo) {
+
+    digitalWrite(trig, LOW);
+    delayMicroseconds(2);
+
+    digitalWrite(trig, HIGH);
+    delayMicroseconds(10);
+    digitalWrite(trig, LOW);
+
+    long duration = pulseIn(echo, HIGH, 20000);
+
+    if (duration == 0) return 200;
+
+    float d = duration * 0.034 / 2.0;
+
+    if (d < 5) d = 5;
+    if (d > 200) d = 200;
+
+    return d;
+}
+
+float filterUltrasonic(float raw, float prev) {
+
+    if (abs(raw - prev) > 20) {
+        return prev;
+    }
+
+    return 0.85 * prev + 0.15 * raw;
+}
+
 
 void initSensors() {
 
     Wire.begin();
 
-    pinMode(XSHUT_RIGHT, OUTPUT);
     pinMode(XSHUT_FRONT, OUTPUT);
-    pinMode(XSHUT_LEFT, OUTPUT);
-
-    digitalWrite(XSHUT_RIGHT, LOW);
     digitalWrite(XSHUT_FRONT, LOW);
-    digitalWrite(XSHUT_LEFT, LOW);
     delay(100);
-
-    digitalWrite(XSHUT_RIGHT, HIGH);
-    delay(100);
-
-    sensorRight.init();
-    sensorRight.setAddress(0x30);
-    sensorRight.startContinuous();
 
     digitalWrite(XSHUT_FRONT, HIGH);
     delay(100);
 
     sensorFront.init();
-    sensorFront.setAddress(0x31);
+    sensorFront.setAddress(0x30);
     sensorFront.startContinuous();
+    sensorFront.setTimeout(50);
 
-    digitalWrite(XSHUT_LEFT, HIGH);
-    delay(100);
+    pinMode(TRIG_LEFT, OUTPUT);
+    pinMode(ECHO_LEFT, INPUT);
 
-    sensorLeft.init();
-    sensorLeft.setAddress(0x32);
-    sensorLeft.startContinuous();
+    pinMode(TRIG_RIGHT, OUTPUT);
+    pinMode(ECHO_RIGHT, INPUT);
 
-    Serial.println("ToF INIT DONE");
 }
 
-float getFrontDistance() { return readSensor(sensorFront); }
-float getLeftDistance()  { return readSensor(sensorLeft); }
-float getRightDistance() { return readSensor(sensorRight); }
+float getFrontDistance() {
+
+    return readFrontTOF();
+
+}
+
+float getLeftDistance() {
+
+    static float filtered = 10;
+
+    float raw = readUltrasonic(TRIG_LEFT, ECHO_LEFT);
+    delay(5); 
+
+    filtered = filterUltrasonic(raw, filtered);
+
+    return filtered;
+
+}
+
+float getRightDistance() {
+
+    static float filtered = 10;
+
+    float raw = readUltrasonic(TRIG_RIGHT, ECHO_RIGHT);
+    delay(5);
+
+    filtered = filterUltrasonic(raw, filtered);
+
+    return filtered;
+    
+}

@@ -4,22 +4,18 @@
 enum RobotState {
     IDLE,
     MOVING_FORWARD,
-    TURNING_RIGHT,
     TURNING_LEFT,
+    TURNING_RIGHT,
     TURNING_AROUND
 };
 
 extern RobotState currentState;
 
-bool isRobotIdle();
-RobotState getRobotState();
-
-void moveForward();
-void turnLeft90();
-void turnRight90();
-void turnAround();
-
 void updateMotion();
-void stabilizeForward();
+
+RobotState getRobotState();
+bool isRobotIdle();
+void stabilize(float left, float right);
+void driveStraightCorridor();
 
 #endif

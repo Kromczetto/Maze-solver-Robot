@@ -4,7 +4,7 @@
 #include "motors.h"
 #include "motion.h"
 #include "tof_sensors.h"
-// #include "left_hand.h"
+#include "left_hand.h"
 #include "mpu.h"
 
 SoftwareSerial SUART(12, 13);
@@ -42,12 +42,14 @@ const char* getStateString() {
 
 void sendTelemetry() {
 
+    SUART.listen();  
+
     int front = (int)getFrontDistance();
     int left  = (int)getLeftDistance();
     int right = (int)getRightDistance();
-    int angle = (int)getAngle();
+    int angle = 0;
 
-    const char* state = getStateString();
+    const char* state = "STATE";
 
     SUART.print(front);
     SUART.print(",");
@@ -58,6 +60,15 @@ void sendTelemetry() {
     SUART.print(angle);
     SUART.print(",");
     SUART.println(state);
+
+    Serial.print(front);
+    Serial.print(",");
+    Serial.print(left);
+    Serial.print(",");
+    Serial.print(right);
+    Serial.print(",");
+    
+    Serial.println(state);
 }
 
 void setup() {
@@ -70,8 +81,10 @@ void setup() {
 
     Serial.println("START");
 }
+
 void loop() {
 
+    // 🔥 najpierw odbiór
     if (SUART.available()) {
         char c = SUART.read();
 
@@ -82,17 +95,24 @@ void loop() {
 
         if (c == 'R') {
             robotEnabled = true;
-            currentState = MOVING_FORWARD;
-            resetAngle(); // 🔥 MUST HAVE
         }
     }
 
     if (robotEnabled) {
-        updateGyro();
-        updateMotion();
+        driveStraightCorridor();
+        // updateGyro();
+        // updateMotion();
+
+        // if (isRobotIdle()) {
+        //     leftHandStep();
+        // }
     }
 
+    // 🔥 telemetry rzadziej
     if (millis() - lastTelemetry > TELEMETRY_INTERVAL) {
+
+        SUART.listen();   // 🔥 KLUCZ
+
         sendTelemetry();
         lastTelemetry = millis();
     }

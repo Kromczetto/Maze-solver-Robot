@@ -3,6 +3,8 @@
 
 void initMotors();
 
+void setMotorSpeed(int leftSpeed, int rightSpeed);
+
 void leftMotorForward();
 void leftMotorBackward();
 void leftMotorStop();
@@ -12,6 +14,5 @@ void rightMotorBackward();
 void rightMotorStop();
 
 void stopMotors();
-// void motorsUpdate();
 
 #endif
