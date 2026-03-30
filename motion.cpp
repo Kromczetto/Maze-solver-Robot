@@ -3,6 +3,7 @@
 #include "motors.h"
 #include "tof_sensors.h"
 #include "robot_config.h"
+#include "mpu.h"
 
 RobotState currentState = FORWARD;
 
@@ -87,6 +88,7 @@ void updateMotion() {
             if (left > OPEN_THRESHOLD) {
 
                 saveFrontDistance = front;
+                resetAngle();
                 currentState = TURNING_LEFT;
                 return;
 
@@ -95,6 +97,7 @@ void updateMotion() {
             if (right > OPEN_THRESHOLD) {
 
                 saveFrontDistance = front;
+                resetAngle();
                 currentState = TURNING_RIGHT;
                 return;
 
@@ -105,7 +108,9 @@ void updateMotion() {
         
         case TURNING_LEFT:
 
-            if (left < 10) {
+            float angle = getAngle();
+
+            if (angle >= TURN_ANGLE) {
 
                 currentState = FORWARD;
                 return;
@@ -119,7 +124,9 @@ void updateMotion() {
 
         case TURNING_RIGHT:
 
-            if (right < 10) {
+            angle = getAngle();
+
+            if (angle <= -TURN_ANGLE) {
             
                 currentState = FORWARD;
                 return;
@@ -128,6 +135,10 @@ void updateMotion() {
             if (saveFrontDistance - getFrontDistance() < 10) return;
 
             turnRight();
+            break;
+
+        case IDLE:
+            stopMotors();
             break;
     }
 

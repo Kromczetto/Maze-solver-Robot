@@ -32,7 +32,7 @@ void sendTelemetry() {
     int front = (int)getFrontDistance();
     int left  = (int)getLeftDistance();
     int right = (int)getRightDistance();
-    int angle = 0;
+    int angle = getAngle();
 
     const char* state = getStateString();
 
@@ -73,13 +73,10 @@ void loop() {
     }
 
     if (robotEnabled) {
-        // driveStraightCorridor();
-        // updateGyro();
+
+        updateGyro();
         updateMotion();
 
-        // if (isRobotIdle()) {
-        //     leftHandStep();
-        // }
     }
 
     if (millis() - lastTelemetry > TELEMETRY_INTERVAL) {
