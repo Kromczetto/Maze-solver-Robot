@@ -3,15 +3,14 @@
 
 enum RobotState {
     IDLE,
-    MOVING_FORWARD,
-    TURNING_LEFT,
-    TURNING_RIGHT,
-    TURNING_AROUND
+    FORWARD,
+    TURNING_LEFT
 };
 
 extern RobotState currentState;
 
 void updateMotion();
+void turnLeft();
 
 RobotState getRobotState();
 bool isRobotIdle();

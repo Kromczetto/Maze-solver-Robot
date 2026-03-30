@@ -50,13 +50,15 @@ float readUltrasonic(int trig, int echo) {
 
 float filterUltrasonic(float raw, float prev) {
 
-    if (abs(raw - prev) > 20) {
-        return prev;
-    }
+    float maxStep = 15;
 
-    return 0.85 * prev + 0.15 * raw;
+    float diff = raw - prev;
+
+    if (diff > maxStep) diff = maxStep;
+    if (diff < -maxStep) diff = -maxStep;
+
+    return prev + diff;
 }
-
 
 void initSensors() {
 
@@ -113,3 +115,4 @@ float getRightDistance() {
     return filtered;
     
 }
+

@@ -17,28 +17,13 @@ const int TELEMETRY_INTERVAL = 200;
 const char* getStateString() {
     switch (getRobotState()) {
         case IDLE: return "IDLE";
-        case MOVING_FORWARD: return "FORWARD";
+        case FORWARD: return "FORWARD";
         case TURNING_LEFT: return "LEFT";
-        case TURNING_RIGHT: return "RIGHT";
-        case TURNING_AROUND: return "AROUND";
+        //case TURNING_RIGHT: return "RIGHT";
+        //case TURNING_AROUND: return "AROUND";
     }
     return "UNKNOWN";
 }
-
-// void readBLECommands() {
-//     while (SUART.available()) {
-//         char c = SUART.read();
-
-//         if (c == 'S') {
-//             robotEnabled = false;
-//             stopMotors();
-//         }
-
-//         if (c == 'R') {
-//             robotEnabled = true;
-//         }
-//     }
-// }
 
 void sendTelemetry() {
 
@@ -49,7 +34,7 @@ void sendTelemetry() {
     int right = (int)getRightDistance();
     int angle = 0;
 
-    const char* state = "STATE";
+    const char* state = getStateString();
 
     SUART.print(front);
     SUART.print(",");
@@ -60,31 +45,20 @@ void sendTelemetry() {
     SUART.print(angle);
     SUART.print(",");
     SUART.println(state);
-
-    Serial.print(front);
-    Serial.print(",");
-    Serial.print(left);
-    Serial.print(",");
-    Serial.print(right);
-    Serial.print(",");
-    
-    Serial.println(state);
 }
 
 void setup() {
-    Serial.begin(9600);
+
     SUART.begin(9600);
 
     initMotors();
     initSensors();
     initMPU(); 
 
-    Serial.println("START");
 }
 
 void loop() {
 
-    // 🔥 najpierw odbiór
     if (SUART.available()) {
         char c = SUART.read();
 
@@ -99,19 +73,18 @@ void loop() {
     }
 
     if (robotEnabled) {
-        driveStraightCorridor();
+        // driveStraightCorridor();
         // updateGyro();
-        // updateMotion();
+        updateMotion();
 
         // if (isRobotIdle()) {
         //     leftHandStep();
         // }
     }
 
-    // 🔥 telemetry rzadziej
     if (millis() - lastTelemetry > TELEMETRY_INTERVAL) {
 
-        SUART.listen();   // 🔥 KLUCZ
+        SUART.listen(); 
 
         sendTelemetry();
         lastTelemetry = millis();

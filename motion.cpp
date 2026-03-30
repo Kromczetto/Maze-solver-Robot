@@ -2,6 +2,15 @@
 #include "motion.h"
 #include "motors.h"
 #include "tof_sensors.h"
+#include "robot_config.h"
+
+RobotState currentState = FORWARD;
+
+static float saveFrontDistance = 0.0;
+
+RobotState getRobotState() {
+    return currentState;
+}
 
 void driveStraightCorridor() {
 
@@ -12,7 +21,7 @@ void driveStraightCorridor() {
     int baseRight = 120;
 
     int correction = 30;
-    int threshold  = 3;
+    int threshold  = 2;
 
     int leftSpeed  = baseLeft;
     int rightSpeed = baseRight;
@@ -38,3 +47,61 @@ void driveStraightCorridor() {
     leftMotorForward();
     rightMotorForward();
 }
+
+void turnLeft() {
+    
+    setMotorSpeed(120, 0);
+
+    leftMotorForward();
+    rightMotorForward();
+
+}
+
+void updateMotion() {
+
+    float left = getLeftDistance();
+    float front = getFrontDistance();
+
+    switch (currentState) {
+
+        case FORWARD: 
+
+            if (front < 7) {
+
+                stopMotors();
+                currentState = IDLE;
+                return;
+
+            }
+
+            if (left > OPEN_THRESHOLD) {
+
+                saveFrontDistance = front;
+                currentState = TURNING_LEFT;
+                return;
+
+            }
+
+            driveStraightCorridor();
+            break;
+        
+        case TURNING_LEFT:
+
+            if (left < 10) {
+
+                currentState = FORWARD;
+                return;
+
+            }
+     
+            if (saveFrontDistance - getFrontDistance() < 10) return;
+
+            turnLeft();
+            break;
+    }
+
+}
+
+
+
+
