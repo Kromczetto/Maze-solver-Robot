@@ -57,9 +57,19 @@ void turnLeft() {
 
 }
 
+void turnRight() {
+
+    setMotorSpeed(0, 120);
+
+    leftMotorForward();
+    rightMotorForward();
+
+}
+
 void updateMotion() {
 
     float left = getLeftDistance();
+    float right = getRightDistance();
     float front = getFrontDistance();
 
     switch (currentState) {
@@ -82,6 +92,14 @@ void updateMotion() {
 
             }
 
+            if (right > OPEN_THRESHOLD) {
+
+                saveFrontDistance = front;
+                currentState = TURNING_RIGHT;
+                return;
+
+            }
+
             driveStraightCorridor();
             break;
         
@@ -97,6 +115,19 @@ void updateMotion() {
             if (saveFrontDistance - getFrontDistance() < 10) return;
 
             turnLeft();
+            break;
+
+        case TURNING_RIGHT:
+
+            if (right < 10) {
+            
+                currentState = FORWARD;
+                return;
+            }
+
+            if (saveFrontDistance - getFrontDistance() < 10) return;
+
+            turnRight();
             break;
     }
 

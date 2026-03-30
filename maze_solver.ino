@@ -19,7 +19,7 @@ const char* getStateString() {
         case IDLE: return "IDLE";
         case FORWARD: return "FORWARD";
         case TURNING_LEFT: return "LEFT";
-        //case TURNING_RIGHT: return "RIGHT";
+        case TURNING_RIGHT: return "RIGHT";
         //case TURNING_AROUND: return "AROUND";
     }
     return "UNKNOWN";
