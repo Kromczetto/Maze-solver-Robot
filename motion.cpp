@@ -8,6 +8,7 @@
 RobotState currentState = FORWARD;
 
 static float saveFrontDistance = 0.0;
+unsigned long prepareStartTime = 0;
 
 RobotState getRobotState() {
     return currentState;
@@ -51,19 +52,36 @@ void driveStraightCorridor() {
 
 void turnLeft() {
     
-    setMotorSpeed(120, 0);
+    setMotorSpeed(120, 120);
 
     leftMotorForward();
-    rightMotorForward();
+    rightMotorBackward();
 
 }
 
 void turnRight() {
 
-    setMotorSpeed(0, 120);
-
-    leftMotorForward();
+    setMotorSpeed(120, 120);
+    
+    leftMotorBackward();
     rightMotorForward();
+
+}
+
+void turnAround() {
+        
+    setMotorSpeed(120, 120);
+    
+    if (getLeftDistance() > getRightDistance()) {
+
+        leftMotorBackward();
+        rightMotorForward();
+
+    } else {
+
+        leftMotorForward();
+        rightMotorForward();
+    }
 
 }
 
@@ -89,7 +107,7 @@ void updateMotion() {
 
                 saveFrontDistance = front;
                 resetAngle();
-                currentState = TURNING_LEFT;
+                currentState = PREPARE_TURN_LEFT;
                 return;
 
             }
@@ -98,47 +116,103 @@ void updateMotion() {
 
                 saveFrontDistance = front;
                 resetAngle();
-                currentState = TURNING_RIGHT;
+                currentState = PREPARE_TURN_RIGHT;
                 return;
 
+            }
+
+            if (front < 10 && right < 12 && left < 12) {
+                currentState = TURNING_AROUND;
             }
 
             driveStraightCorridor();
             break;
         
-        case TURNING_LEFT:
+        case TURNING_LEFT: {
 
             float angle = getAngle();
 
+            turnLeft(); 
+
             if (angle >= TURN_ANGLE) {
 
+                stopMotors(); 
                 currentState = FORWARD;
                 return;
 
             }
-     
-            if (saveFrontDistance - getFrontDistance() < 10) return;
 
-            turnLeft();
             break;
+        }
 
-        case TURNING_RIGHT:
+       case TURNING_RIGHT: {
 
-            angle = getAngle();
+            float angle = getAngle();
+
+            turnRight(); 
 
             if (angle <= -TURN_ANGLE) {
-            
+
+                stopMotors();
                 currentState = FORWARD;
                 return;
             }
 
-            if (saveFrontDistance - getFrontDistance() < 10) return;
-
-            turnRight();
             break;
+        }
 
         case IDLE:
+
             stopMotors();
+            break;
+
+        case PREPARE_TURN_LEFT: 
+
+            if (prepareStartTime == 0) {
+                prepareStartTime = millis();
+            } 
+
+            setMotorSpeed(120, 120);
+            leftMotorForward();
+            rightMotorForward();
+
+            if (millis() - prepareStartTime > 300) {
+
+                prepareStartTime = 0;
+                resetAngle();
+                currentState = TURNING_LEFT;
+            }
+
+            break;
+        
+        case PREPARE_TURN_RIGHT: 
+
+            if (prepareStartTime == 0) {
+                prepareStartTime = millis();
+            }
+            
+            setMotorSpeed(120, 120);
+            leftMotorForward();
+            rightMotorForward();
+
+            if (millis() - prepareStartTime > 300) {
+
+                prepareStartTime = 0;
+                resetAngle();
+                currentState = TURNING_RIGHT;
+
+            }
+
+            break;
+
+        case TURNING_AROUND:
+
+            if (front > 20) {
+                currentState = FORWARD;
+            }
+
+            turnAround();
+
             break;
     }
 

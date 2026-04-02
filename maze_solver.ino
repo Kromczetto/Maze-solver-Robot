@@ -20,7 +20,9 @@ const char* getStateString() {
         case FORWARD: return "FORWARD";
         case TURNING_LEFT: return "LEFT";
         case TURNING_RIGHT: return "RIGHT";
-        //case TURNING_AROUND: return "AROUND";
+        case PREPARE_TURN_LEFT: return "PRE_LEFT";
+        case PREPARE_TURN_RIGHT: return "PRE_RIGHT";
+        case TURNING_AROUND: return "AROUND";
     }
     return "UNKNOWN";
 }
@@ -69,6 +71,8 @@ void loop() {
 
         if (c == 'R') {
             robotEnabled = true;
+            currentState = FORWARD;
+            resetAngle();
         }
     }
 

@@ -5,7 +5,10 @@ enum RobotState {
     IDLE,
     FORWARD,
     TURNING_LEFT,
-    TURNING_RIGHT
+    TURNING_RIGHT,
+    PREPARE_TURN_LEFT,
+    PREPARE_TURN_RIGHT,
+    TURNING_AROUND
 };
 
 extern RobotState currentState;
@@ -13,6 +16,7 @@ extern RobotState currentState;
 void updateMotion();
 void turnLeft();
 void turnRight();
+void turnAround();
 
 RobotState getRobotState();
 bool isRobotIdle();

@@ -9,6 +9,7 @@ float gyroOffset = 0;
 unsigned long lastTime = 0;
 
 int16_t rawGyroZ;
+float lastAngle = 0;
 
 void writeMPU(byte reg, byte data) {
     Wire.beginTransmission(MPU_ADDR);
@@ -47,6 +48,8 @@ void updateGyro() {
     float dt = (now - lastTime) / 1000.0;
     lastTime = now;
 
+    if (dt <= 0 || dt > 0.1) return;
+
     Wire.beginTransmission(MPU_ADDR);
     Wire.write(0x47);
     Wire.endTransmission(false);
@@ -56,11 +59,17 @@ void updateGyro() {
 
     float gyroZ = (rawGyroZ - gyroOffset) / 131.0; // deg/s
 
-    angleZ += gyroZ * dt;
+    float newAngle = angleZ + gyroZ * dt;
+
+    if (abs(newAngle - lastAngle) < 50) {
+        angleZ = newAngle;
+        lastAngle = angleZ;
+    }
 }
 
 void resetAngle() {
     angleZ = 0;
+    lastAngle = 0;
 }
 
 float getAngle() {
