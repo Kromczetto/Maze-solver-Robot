@@ -51,38 +51,37 @@ void setup() {
     SUART.begin(9600);
 
     initMotors();
- //   initSensors();
+    initSensors();
     initEncoders();
 
 }
 
 void loop() {
 
-    driveForward();
-    // if (SUART.available()) {
-    //     char c = SUART.read();
+    if (SUART.available()) {
+        char c = SUART.read();
 
-    //     if (c == 'S') {
-    //         robotEnabled = false;
-    //         stopMotors();
-    //     }
+        if (c == 'S') {
+            robotEnabled = false;
+            stopMotors();
+        }
 
-    //     if (c == 'R') {
-    //         robotEnabled = true;
-    //     }
-    // }
+        if (c == 'R') {
+            robotEnabled = true;
+        }
+    }
 
-    // if (robotEnabled) {
+    if (robotEnabled) {
 
-    //     updateMotion();
+        updateMotion();
 
-    // }
+    }
 
-    // if (millis() - lastTelemetry > TELEMETRY_INTERVAL) {
+    if (millis() - lastTelemetry > TELEMETRY_INTERVAL) {
 
-    //     SUART.listen(); 
+        SUART.listen(); 
 
-    //     sendTelemetry();
-    //     lastTelemetry = millis();
-    // }
+        sendTelemetry();
+        lastTelemetry = millis();
+    }
 }

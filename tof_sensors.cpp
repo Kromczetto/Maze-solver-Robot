@@ -3,9 +3,9 @@
 #include <VL53L0X.h>
 #include "tof_sensors.h"
 
-#define XSHUT_LEFT  10
-#define XSHUT_FRONT 9
-#define XSHUT_RIGHT 8
+#define XSHUT_LEFT  12
+#define XSHUT_FRONT 13
+#define XSHUT_RIGHT A0
 
 VL53L0X sensorLeft;
 VL53L0X sensorFront;

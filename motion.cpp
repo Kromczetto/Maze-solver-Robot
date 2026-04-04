@@ -7,29 +7,23 @@
 
 RobotState currentState = FORWARD;
 
-// 🔥 KALIBRACJA
-#define TICKS_PER_CELL 2400   // MUSISZ dostroić!
-#define TURN_TICKS 800        // ~90 stopni
+#define TICKS_PER_CELL 2400
+#define TURN_TICKS 800
 
 void driveForward() {
-
-    int baseLeft  = 140;
-    int baseRight = 150;
-
-    setMotorSpeed(baseLeft, baseRight);
-
+    setMotorSpeed(150, 150);
     leftMotorForward();
     rightMotorForward();
 }
 
 void turnLeft() {
-    setMotorSpeed(110, 110);
+    setMotorSpeed(130, 130);
     leftMotorBackward();
     rightMotorForward();
 }
 
 void turnRight() {
-    setMotorSpeed(110, 110);
+    setMotorSpeed(130, 130);
     leftMotorForward();
     rightMotorBackward();
 }
@@ -52,7 +46,6 @@ void updateMotion() {
 
     switch (currentState) {
 
-        // ===== JEDŹ 25 CM =====
         case FORWARD:
 
             driveForward();
@@ -65,7 +58,6 @@ void updateMotion() {
 
             break;
 
-        // ===== DECYZJA NA ŚRODKU =====
         case DECIDE:
 
             if (left > OPEN_THRESHOLD) {
@@ -73,6 +65,7 @@ void updateMotion() {
                 currentState = TURNING_LEFT;
             }
             else if (front > OPEN_THRESHOLD) {
+                resetEncoders();
                 currentState = FORWARD;
             }
             else if (right > OPEN_THRESHOLD) {
@@ -86,7 +79,6 @@ void updateMotion() {
 
             break;
 
-        // ===== SKRĘTY =====
         case TURNING_LEFT:
 
             turnLeft();
