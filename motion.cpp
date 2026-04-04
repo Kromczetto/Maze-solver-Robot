@@ -3,221 +3,128 @@
 #include "motors.h"
 #include "tof_sensors.h"
 #include "robot_config.h"
-#include "mpu.h"
+#include "encoders.h"
 
 RobotState currentState = FORWARD;
 
-static float saveFrontDistance = 0.0;
-unsigned long prepareStartTime = 0;
+// 🔥 KALIBRACJA
+#define TICKS_PER_CELL 2400   // MUSISZ dostroić!
+#define TURN_TICKS 800        // ~90 stopni
 
-RobotState getRobotState() {
-    return currentState;
-}
+void driveForward() {
 
-void driveStraightCorridor() {
+    int baseLeft  = 140;
+    int baseRight = 150;
 
-    float left  = getLeftDistance();
-    float right = getRightDistance();
-
-    int baseLeft  = 110;
-    int baseRight = 120;
-
-    int correction = 30;
-    int threshold  = 2;
-
-    int leftSpeed  = baseLeft;
-    int rightSpeed = baseRight;
-
-    float diff = left - right;
-
-    if (diff > threshold) {
-    
-        rightSpeed -= correction;
-
-    }
-    else if (diff < -threshold) {
-      
-        leftSpeed -= correction;
-        
-    }
-
-    leftSpeed  = constrain(leftSpeed, 80, 200);
-    rightSpeed = constrain(rightSpeed, 80, 200);
-
-    setMotorSpeed(leftSpeed, rightSpeed);
+    setMotorSpeed(baseLeft, baseRight);
 
     leftMotorForward();
     rightMotorForward();
 }
 
 void turnLeft() {
-    
-    setMotorSpeed(120, 120);
-
-    leftMotorForward();
-    rightMotorBackward();
-
+    setMotorSpeed(110, 110);
+    leftMotorBackward();
+    rightMotorForward();
 }
 
 void turnRight() {
-
-    setMotorSpeed(120, 120);
-    
-    leftMotorBackward();
-    rightMotorForward();
-
+    setMotorSpeed(110, 110);
+    leftMotorForward();
+    rightMotorBackward();
 }
 
-void turnAround() {
-        
-    setMotorSpeed(120, 120);
-    
-    if (getLeftDistance() > getRightDistance()) {
+void stop() {
+    stopMotors();
+}
 
-        leftMotorBackward();
-        rightMotorForward();
-
-    } else {
-
-        leftMotorForward();
-        rightMotorForward();
-    }
-
+RobotState getRobotState() {
+    return currentState;
 }
 
 void updateMotion() {
 
-    float left = getLeftDistance();
-    float right = getRightDistance();
     float front = getFrontDistance();
+    float left  = getLeftDistance();
+    float right = getRightDistance();
+
+    long avgTicks = (getLeftTicks() + getRightTicks()) / 2;
 
     switch (currentState) {
 
-        case FORWARD: 
+        // ===== JEDŹ 25 CM =====
+        case FORWARD:
 
-            if (front < 7) {
+            driveForward();
 
-                stopMotors();
-                currentState = IDLE;
-                return;
-
+            if (avgTicks >= TICKS_PER_CELL) {
+                stop();
+                resetEncoders();
+                currentState = DECIDE;
             }
+
+            break;
+
+        // ===== DECYZJA NA ŚRODKU =====
+        case DECIDE:
 
             if (left > OPEN_THRESHOLD) {
-
-                saveFrontDistance = front;
-                resetAngle();
-                currentState = PREPARE_TURN_LEFT;
-                return;
-
+                resetEncoders();
+                currentState = TURNING_LEFT;
             }
-
-            if (right > OPEN_THRESHOLD) {
-
-                saveFrontDistance = front;
-                resetAngle();
-                currentState = PREPARE_TURN_RIGHT;
-                return;
-
+            else if (front > OPEN_THRESHOLD) {
+                currentState = FORWARD;
             }
-
-            if (front < 10 && right < 12 && left < 12) {
+            else if (right > OPEN_THRESHOLD) {
+                resetEncoders();
+                currentState = TURNING_RIGHT;
+            }
+            else {
+                resetEncoders();
                 currentState = TURNING_AROUND;
             }
 
-            driveStraightCorridor();
             break;
-        
-        case TURNING_LEFT: {
 
-            float angle = getAngle();
+        // ===== SKRĘTY =====
+        case TURNING_LEFT:
 
-            turnLeft(); 
+            turnLeft();
 
-            if (angle >= TURN_ANGLE) {
-
-                stopMotors(); 
+            if (getLeftTicks() >= TURN_TICKS) {
+                stop();
+                resetEncoders();
                 currentState = FORWARD;
-                return;
-
             }
 
             break;
-        }
 
-       case TURNING_RIGHT: {
+        case TURNING_RIGHT:
 
-            float angle = getAngle();
+            turnRight();
 
-            turnRight(); 
-
-            if (angle <= -TURN_ANGLE) {
-
-                stopMotors();
+            if (getRightTicks() >= TURN_TICKS) {
+                stop();
+                resetEncoders();
                 currentState = FORWARD;
-                return;
-            }
-
-            break;
-        }
-
-        case IDLE:
-
-            stopMotors();
-            break;
-
-        case PREPARE_TURN_LEFT: 
-
-            if (prepareStartTime == 0) {
-                prepareStartTime = millis();
-            } 
-
-            setMotorSpeed(120, 120);
-            leftMotorForward();
-            rightMotorForward();
-
-            if (millis() - prepareStartTime > 300) {
-
-                prepareStartTime = 0;
-                resetAngle();
-                currentState = TURNING_LEFT;
-            }
-
-            break;
-        
-        case PREPARE_TURN_RIGHT: 
-
-            if (prepareStartTime == 0) {
-                prepareStartTime = millis();
-            }
-            
-            setMotorSpeed(120, 120);
-            leftMotorForward();
-            rightMotorForward();
-
-            if (millis() - prepareStartTime > 300) {
-
-                prepareStartTime = 0;
-                resetAngle();
-                currentState = TURNING_RIGHT;
-
             }
 
             break;
 
         case TURNING_AROUND:
 
-            if (front > 20) {
+            turnLeft();
+
+            if (getLeftTicks() >= TURN_TICKS * 2) {
+                stop();
+                resetEncoders();
                 currentState = FORWARD;
             }
 
-            turnAround();
+            break;
 
+        case IDLE:
+            stop();
             break;
     }
-
 }
-
-
-
-

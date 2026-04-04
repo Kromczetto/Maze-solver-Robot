@@ -4,10 +4,9 @@
 #include "motors.h"
 #include "motion.h"
 #include "tof_sensors.h"
-#include "left_hand.h"
-#include "mpu.h"
+#include "encoders.h"
 
-SoftwareSerial SUART(12, 13);
+SoftwareSerial SUART(A1, A2);
 
 bool robotEnabled = true;
 
@@ -20,8 +19,6 @@ const char* getStateString() {
         case FORWARD: return "FORWARD";
         case TURNING_LEFT: return "LEFT";
         case TURNING_RIGHT: return "RIGHT";
-        case PREPARE_TURN_LEFT: return "PRE_LEFT";
-        case PREPARE_TURN_RIGHT: return "PRE_RIGHT";
         case TURNING_AROUND: return "AROUND";
     }
     return "UNKNOWN";
@@ -34,7 +31,7 @@ void sendTelemetry() {
     int front = (int)getFrontDistance();
     int left  = (int)getLeftDistance();
     int right = (int)getRightDistance();
-    int angle = getAngle();
+    int angle = 0;
 
     const char* state = getStateString();
 
@@ -54,40 +51,38 @@ void setup() {
     SUART.begin(9600);
 
     initMotors();
-    initSensors();
-    initMPU(); 
+ //   initSensors();
+    initEncoders();
 
 }
 
 void loop() {
 
-    if (SUART.available()) {
-        char c = SUART.read();
+    driveForward();
+    // if (SUART.available()) {
+    //     char c = SUART.read();
 
-        if (c == 'S') {
-            robotEnabled = false;
-            stopMotors();
-        }
+    //     if (c == 'S') {
+    //         robotEnabled = false;
+    //         stopMotors();
+    //     }
 
-        if (c == 'R') {
-            robotEnabled = true;
-            currentState = FORWARD;
-            resetAngle();
-        }
-    }
+    //     if (c == 'R') {
+    //         robotEnabled = true;
+    //     }
+    // }
 
-    if (robotEnabled) {
+    // if (robotEnabled) {
 
-        updateGyro();
-        updateMotion();
+    //     updateMotion();
 
-    }
+    // }
 
-    if (millis() - lastTelemetry > TELEMETRY_INTERVAL) {
+    // if (millis() - lastTelemetry > TELEMETRY_INTERVAL) {
 
-        SUART.listen(); 
+    //     SUART.listen(); 
 
-        sendTelemetry();
-        lastTelemetry = millis();
-    }
+    //     sendTelemetry();
+    //     lastTelemetry = millis();
+    // }
 }
