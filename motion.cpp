@@ -7,11 +7,37 @@
 
 RobotState currentState = FORWARD;
 
-#define TICKS_PER_CELL 2400
-#define TURN_TICKS 800
+#define TICKS_PER_CELL 1550
+#define TURN_TICKS 425
 
 void driveForward() {
-    setMotorSpeed(150, 150);
+
+    float left  = getLeftDistance();
+    float right = getRightDistance();
+
+    int baseSpeed = 150;
+
+    int leftSpeed  = baseSpeed;
+    int rightSpeed = baseSpeed;
+
+    float Kp = 5.0;     
+    float maxCorrection = 40;
+
+    float error = left - right;
+
+    float correction = Kp * error;
+
+    if (correction > maxCorrection) correction = maxCorrection;
+    if (correction < -maxCorrection) correction = -maxCorrection;
+
+    leftSpeed  -= correction;
+    rightSpeed += correction;
+
+    leftSpeed  = constrain(leftSpeed, 100, 200);
+    rightSpeed = constrain(rightSpeed, 100, 200);
+
+    setMotorSpeed(leftSpeed, rightSpeed);
+
     leftMotorForward();
     rightMotorForward();
 }
