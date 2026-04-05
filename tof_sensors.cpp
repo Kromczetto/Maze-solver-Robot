@@ -7,14 +7,46 @@
 #define XSHUT_FRONT 13
 #define XSHUT_RIGHT A0
 
+#define FILTER_SIZE 5
+
 VL53L0X sensorLeft;
 VL53L0X sensorFront;
 VL53L0X sensorRight;
 
+float leftBuffer[FILTER_SIZE]  = {200,200,200,200,200};
+float rightBuffer[FILTER_SIZE] = {200,200,200,200,200};
+float frontBuffer[FILTER_SIZE] = {200,200,200,200,200};
+
+float medianFilter(float newValue, float *buffer) {
+
+    for (int i = FILTER_SIZE - 1; i > 0; i--) {
+        buffer[i] = buffer[i - 1];
+    }
+    buffer[0] = newValue;
+
+    float temp[FILTER_SIZE];
+    for (int i = 0; i < FILTER_SIZE; i++) {
+        temp[i] = buffer[i];
+    }
+
+    for (int i = 0; i < FILTER_SIZE - 1; i++) {
+        for (int j = 0; j < FILTER_SIZE - i - 1; j++) {
+            if (temp[j] > temp[j + 1]) {
+                float t = temp[j];
+                temp[j] = temp[j + 1];
+                temp[j + 1] = t;
+            }
+        }
+    }
+
+    return temp[FILTER_SIZE / 2];
+}
+
 float filterDistance(uint16_t d) {
 
-    if (d == 0 || d == 65535 || d > 2000) return 100;
-    return d / 10.0;
+    if (d == 0 || d == 65535 || d > 2000) return 200;
+
+    return d / 10.0; 
 }
 
 void initSensors() {
@@ -46,6 +78,7 @@ void initSensors() {
     sensorFront.startContinuous();
     sensorFront.setTimeout(50);
 
+    // RIGHT
     digitalWrite(XSHUT_RIGHT, HIGH);
     delay(100);
 
@@ -63,7 +96,7 @@ float readTOF(VL53L0X &sensor) {
 
     uint16_t d = sensor.readRangeContinuousMillimeters();
 
-    if (sensor.timeoutOccurred()) return 100;
+    if (sensor.timeoutOccurred()) return 200;
 
     return filterDistance(d);
 }
@@ -81,17 +114,16 @@ float getRightDistance() {
 }
 
 float getLeftFiltered() {
-    static float last = 200;
-    float current = getLeftDistance();
-    float filtered = 0.7 * last + 0.3 * current;
-    last = filtered;
-    return filtered;
+    float raw = getLeftDistance();
+    return medianFilter(raw, leftBuffer);
 }
 
 float getRightFiltered() {
-    static float last = 200;
-    float current = getRightDistance();
-    float filtered = 0.7 * last + 0.3 * current;
-    last = filtered;
-    return filtered;
+    float raw = getRightDistance();
+    return medianFilter(raw, rightBuffer);
+}
+
+float getFrontFiltered() {
+    float raw = getFrontDistance();
+    return medianFilter(raw, frontBuffer);
 }

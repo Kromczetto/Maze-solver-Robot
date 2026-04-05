@@ -9,34 +9,35 @@ RobotState currentState = FORWARD;
 
 #define HALF_CELL_TICKS 700
 #define TURN_TICKS 400
+#define FRONT_TURN_THRESHOLD 14
 
 bool turnPending = false;
 RobotState nextTurn = FORWARD;
 
-void driveForward() {
+void driveForward(bool stabilize = true) {
 
-    float left  = getLeftDistance();
-    float right = getRightDistance();
+    float left  = getLeftFiltered();
+    float right = getRightFiltered();
 
     int baseSpeed = 150;
 
     int leftSpeed  = baseSpeed;
     int rightSpeed = baseSpeed;
 
-    float Kp = 5.0;
-    float maxCorrection = 40;
+    if (stabilize && left < OPEN_THRESHOLD && right < OPEN_THRESHOLD) {
 
-    float error = left - right;
-    float correction = Kp * error;
+        float Kp = 5.0;
+        float maxCorrection = 40;
 
-    if (correction > maxCorrection) correction = maxCorrection;
-    if (correction < -maxCorrection) correction = -maxCorrection;
+        float error = left - right;
+        float correction = Kp * error;
 
-    leftSpeed  -= correction;
-    rightSpeed += correction;
+        if (correction > maxCorrection) correction = maxCorrection;
+        if (correction < -maxCorrection) correction = -maxCorrection;
 
-    leftSpeed  = constrain(leftSpeed, 100, 200);
-    rightSpeed = constrain(rightSpeed, 100, 200);
+        leftSpeed  -= correction;
+        rightSpeed += correction;
+    }
 
     setMotorSpeed(leftSpeed, rightSpeed);
 
@@ -45,13 +46,13 @@ void driveForward() {
 }
 
 void turnLeft() {
-    setMotorSpeed(90, 90);
+    setMotorSpeed(120, 120);
     leftMotorBackward();
     rightMotorForward();
 }
 
 void turnRight() {
-    setMotorSpeed(90, 90);
+    setMotorSpeed(120, 120);
     leftMotorForward();
     rightMotorBackward();
 }
@@ -66,41 +67,64 @@ RobotState getRobotState() {
 
 void updateMotion() {
 
-    float left  = getLeftDistance();
-    float right = getRightDistance();
+    float left  = getLeftFiltered();
+    float right = getRightFiltered();
+    float front = getFrontFiltered();
 
     switch (currentState) {
 
         case FORWARD: {
 
-            driveForward();
+            driveForward(!turnPending);
 
             long avgTicks = (getLeftTicks() + getRightTicks()) / 2;
 
-            if (!turnPending && avgTicks > 300) {
+            RobotState newDecision = FORWARD;
 
-                bool leftOpen  = left  > OPEN_THRESHOLD;
-                bool rightOpen = right > OPEN_THRESHOLD;
+            if (left < OPEN_THRESHOLD && right > OPEN_THRESHOLD) {
+                newDecision = TURNING_RIGHT;
+            }
 
-                if (leftOpen) {
-                    nextTurn = TURNING_LEFT;
+            else if (left > OPEN_THRESHOLD) {
+                newDecision = TURNING_LEFT;
+            }
+
+            if (avgTicks > 300 && newDecision != FORWARD) {
+
+                nextTurn = newDecision;
+
+                if (!turnPending) {
+                    turnPending = true;
+                    resetEncoders();
+                    return;
                 }
-                else if (rightOpen) {
-                    nextTurn = TURNING_RIGHT;
-                }
-                else {
-                    break; 
-                }
-
-                turnPending = true;
-
-                resetEncoders();  
-                return;     
             }
 
             if (turnPending) {
 
                 long ticksAfterDetect = (abs(getLeftTicks()) + abs(getRightTicks())) / 2;
+
+                if (nextTurn == TURNING_LEFT) {
+
+                    if (ticksAfterDetect >= HALF_CELL_TICKS - 150) {
+                        stop();
+                        resetEncoders();
+                        currentState = TURNING_LEFT;
+                        turnPending = false;
+                        return;
+                    }
+                }
+
+                if (nextTurn == TURNING_RIGHT) {
+
+                    if (front < FRONT_TURN_THRESHOLD && ticksAfterDetect > 200) {
+                        stop();
+                        resetEncoders();
+                        currentState = TURNING_RIGHT;
+                        turnPending = false;
+                        return;
+                    }
+                }
 
                 if (ticksAfterDetect >= HALF_CELL_TICKS) {
                     stop();

@@ -9,5 +9,6 @@ float getRightDistance();
 
 float getRightFiltered();
 float getLeftFiltered();
+float getFrontFiltered();
 
 #endif
