@@ -7,8 +7,11 @@
 
 RobotState currentState = FORWARD;
 
-#define TICKS_PER_CELL 1550
-#define TURN_TICKS 425
+#define HALF_CELL_TICKS 700
+#define TURN_TICKS 400
+
+bool turnPending = false;
+RobotState nextTurn = FORWARD;
 
 void driveForward() {
 
@@ -20,11 +23,10 @@ void driveForward() {
     int leftSpeed  = baseSpeed;
     int rightSpeed = baseSpeed;
 
-    float Kp = 5.0;     
+    float Kp = 5.0;
     float maxCorrection = 40;
 
     float error = left - right;
-
     float correction = Kp * error;
 
     if (correction > maxCorrection) correction = maxCorrection;
@@ -43,13 +45,13 @@ void driveForward() {
 }
 
 void turnLeft() {
-    setMotorSpeed(130, 130);
+    setMotorSpeed(90, 90);
     leftMotorBackward();
     rightMotorForward();
 }
 
 void turnRight() {
-    setMotorSpeed(130, 130);
+    setMotorSpeed(90, 90);
     leftMotorForward();
     rightMotorBackward();
 }
@@ -64,82 +66,97 @@ RobotState getRobotState() {
 
 void updateMotion() {
 
-    float front = getFrontDistance();
     float left  = getLeftDistance();
     float right = getRightDistance();
 
-    long avgTicks = (getLeftTicks() + getRightTicks()) / 2;
-
     switch (currentState) {
 
-        case FORWARD:
+        case FORWARD: {
 
             driveForward();
 
-            if (avgTicks >= TICKS_PER_CELL) {
-                stop();
-                resetEncoders();
-                currentState = DECIDE;
+            long avgTicks = (getLeftTicks() + getRightTicks()) / 2;
+
+            if (!turnPending && avgTicks > 300) {
+
+                bool leftOpen  = left  > OPEN_THRESHOLD;
+                bool rightOpen = right > OPEN_THRESHOLD;
+
+                if (leftOpen) {
+                    nextTurn = TURNING_LEFT;
+                }
+                else if (rightOpen) {
+                    nextTurn = TURNING_RIGHT;
+                }
+                else {
+                    break; 
+                }
+
+                turnPending = true;
+
+                resetEncoders();  
+                return;     
+            }
+
+            if (turnPending) {
+
+                long ticksAfterDetect = (abs(getLeftTicks()) + abs(getRightTicks())) / 2;
+
+                if (ticksAfterDetect >= HALF_CELL_TICKS) {
+                    stop();
+                    resetEncoders();
+                    currentState = nextTurn;
+                    turnPending = false;
+                }
             }
 
             break;
+        }
 
-        case DECIDE:
-
-            if (left > OPEN_THRESHOLD) {
-                resetEncoders();
-                currentState = TURNING_LEFT;
-            }
-            else if (front > OPEN_THRESHOLD) {
-                resetEncoders();
-                currentState = FORWARD;
-            }
-            else if (right > OPEN_THRESHOLD) {
-                resetEncoders();
-                currentState = TURNING_RIGHT;
-            }
-            else {
-                resetEncoders();
-                currentState = TURNING_AROUND;
-            }
-
-            break;
-
-        case TURNING_LEFT:
+        case TURNING_LEFT: {
 
             turnLeft();
 
-            if (getLeftTicks() >= TURN_TICKS) {
+            long ticks = (abs(getLeftTicks()) + abs(getRightTicks())) / 2;
+
+            if (ticks >= TURN_TICKS) {
                 stop();
                 resetEncoders();
                 currentState = FORWARD;
             }
 
             break;
+        }
 
-        case TURNING_RIGHT:
+        case TURNING_RIGHT: {
 
             turnRight();
 
-            if (getRightTicks() >= TURN_TICKS) {
+            long ticks = (abs(getLeftTicks()) + abs(getRightTicks())) / 2;
+
+            if (ticks >= TURN_TICKS) {
                 stop();
                 resetEncoders();
                 currentState = FORWARD;
             }
 
             break;
+        }
 
-        case TURNING_AROUND:
+        case TURNING_AROUND: {
 
             turnLeft();
 
-            if (getLeftTicks() >= TURN_TICKS * 2) {
+            long ticks = (abs(getLeftTicks()) + abs(getRightTicks())) / 2;
+
+            if (ticks >= TURN_TICKS * 2) {
                 stop();
                 resetEncoders();
                 currentState = FORWARD;
             }
 
             break;
+        }
 
         case IDLE:
             stop();

@@ -79,3 +79,19 @@ float getLeftDistance() {
 float getRightDistance() {
     return readTOF(sensorRight);
 }
+
+float getLeftFiltered() {
+    static float last = 200;
+    float current = getLeftDistance();
+    float filtered = 0.7 * last + 0.3 * current;
+    last = filtered;
+    return filtered;
+}
+
+float getRightFiltered() {
+    static float last = 200;
+    float current = getRightDistance();
+    float filtered = 0.7 * last + 0.3 * current;
+    last = filtered;
+    return filtered;
+}

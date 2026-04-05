@@ -7,4 +7,7 @@ float getFrontDistance();
 float getLeftDistance();
 float getRightDistance();
 
+float getRightFiltered();
+float getLeftFiltered();
+
 #endif
