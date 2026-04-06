@@ -7,9 +7,13 @@
 
 RobotState currentState = FORWARD;
 
-#define HALF_CELL_TICKS 700
-#define TURN_TICKS 400
-#define FRONT_TURN_THRESHOLD 14
+#define HALF_CELL_TICKS 500
+
+#define TURN_TICKS_LEFT 400
+#define TURN_TICKS_RIGHT 400
+
+#define DETECT_DELAY 450
+#define EXTRA_FORWARD_TICKS 100
 
 bool turnPending = false;
 RobotState nextTurn = FORWARD;
@@ -19,24 +23,34 @@ void driveForward(bool stabilize = true) {
     float left  = getLeftFiltered();
     float right = getRightFiltered();
 
-    int baseSpeed = 150;
+    int baseLeft  = 100;
+    int baseRight = 130;
 
-    int leftSpeed  = baseSpeed;
-    int rightSpeed = baseSpeed;
+    int leftSpeed  = baseLeft;
+    int rightSpeed = baseRight;
 
     if (stabilize && left < OPEN_THRESHOLD && right < OPEN_THRESHOLD) {
 
-        float Kp = 5.0;
-        float maxCorrection = 40;
+        static float lastError = 0;
 
-        float error = left - right;
-        float correction = Kp * error;
+        float targetOffset = 2.0;
 
+        float error = (left - right) - targetOffset;
+        float derivative = error - lastError;
+
+        float Kp = 2.2;
+        float Kd = 0.5;
+
+        float correction = Kp * error + Kd * derivative;
+
+        float maxCorrection = 50;
         if (correction > maxCorrection) correction = maxCorrection;
         if (correction < -maxCorrection) correction = -maxCorrection;
 
-        leftSpeed  -= correction;
-        rightSpeed += correction;
+        leftSpeed  = baseLeft  - correction;
+        rightSpeed = baseRight + correction;
+
+        lastError = error;
     }
 
     setMotorSpeed(leftSpeed, rightSpeed);
@@ -46,13 +60,13 @@ void driveForward(bool stabilize = true) {
 }
 
 void turnLeft() {
-    setMotorSpeed(120, 120);
+    setMotorSpeed(100, 100);
     leftMotorBackward();
     rightMotorForward();
 }
 
 void turnRight() {
-    setMotorSpeed(120, 120);
+    setMotorSpeed(100, 100);
     leftMotorForward();
     rightMotorBackward();
 }
@@ -69,7 +83,6 @@ void updateMotion() {
 
     float left  = getLeftFiltered();
     float right = getRightFiltered();
-    float front = getFrontFiltered();
 
     switch (currentState) {
 
@@ -84,12 +97,11 @@ void updateMotion() {
             if (left < OPEN_THRESHOLD && right > OPEN_THRESHOLD) {
                 newDecision = TURNING_RIGHT;
             }
-
             else if (left > OPEN_THRESHOLD) {
                 newDecision = TURNING_LEFT;
             }
 
-            if (avgTicks > 300 && newDecision != FORWARD) {
+            if (avgTicks > DETECT_DELAY && newDecision != FORWARD) {
 
                 nextTurn = newDecision;
 
@@ -104,33 +116,12 @@ void updateMotion() {
 
                 long ticksAfterDetect = (abs(getLeftTicks()) + abs(getRightTicks())) / 2;
 
-                if (nextTurn == TURNING_LEFT) {
-
-                    if (ticksAfterDetect >= HALF_CELL_TICKS - 150) {
-                        stop();
-                        resetEncoders();
-                        currentState = TURNING_LEFT;
-                        turnPending = false;
-                        return;
-                    }
-                }
-
-                if (nextTurn == TURNING_RIGHT) {
-
-                    if (front < FRONT_TURN_THRESHOLD && ticksAfterDetect > 200) {
-                        stop();
-                        resetEncoders();
-                        currentState = TURNING_RIGHT;
-                        turnPending = false;
-                        return;
-                    }
-                }
-
-                if (ticksAfterDetect >= HALF_CELL_TICKS) {
+                if (ticksAfterDetect >= HALF_CELL_TICKS + EXTRA_FORWARD_TICKS) {
                     stop();
                     resetEncoders();
                     currentState = nextTurn;
                     turnPending = false;
+                    return;
                 }
             }
 
@@ -143,7 +134,7 @@ void updateMotion() {
 
             long ticks = (abs(getLeftTicks()) + abs(getRightTicks())) / 2;
 
-            if (ticks >= TURN_TICKS) {
+            if (ticks >= TURN_TICKS_LEFT) {
                 stop();
                 resetEncoders();
                 currentState = FORWARD;
@@ -158,7 +149,7 @@ void updateMotion() {
 
             long ticks = (abs(getLeftTicks()) + abs(getRightTicks())) / 2;
 
-            if (ticks >= TURN_TICKS) {
+            if (ticks >= TURN_TICKS_RIGHT) {
                 stop();
                 resetEncoders();
                 currentState = FORWARD;
@@ -173,7 +164,7 @@ void updateMotion() {
 
             long ticks = (abs(getLeftTicks()) + abs(getRightTicks())) / 2;
 
-            if (ticks >= TURN_TICKS * 2) {
+            if (ticks >= TURN_TICKS_LEFT * 2) {
                 stop();
                 resetEncoders();
                 currentState = FORWARD;
