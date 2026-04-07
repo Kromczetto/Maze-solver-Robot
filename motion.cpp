@@ -9,7 +9,7 @@ RobotState currentState = FORWARD;
 
 #define HALF_CELL_TICKS 500
 
-#define TURN_TICKS_LEFT 350
+#define TURN_TICKS_LEFT 400
 #define TURN_TICKS_RIGHT 400
 
 #define DETECT_DELAY 450
@@ -29,9 +29,9 @@ void driveForward(bool stabilize = true) {
     int leftSpeed  = baseLeft;
     int rightSpeed = baseRight;
 
-    if (stabilize) {
+    static float lastError = 0;
 
-        static float lastError = 0;
+    if (stabilize) {
 
         float Kp = 2.2;
         float Kd = 0.5;
@@ -58,9 +58,20 @@ void driveForward(bool stabilize = true) {
             float targetRight = 10.0;
             error = -(right - targetRight);
         }
-        
+
         else {
-            error = 0;
+
+            int straightCorrection = 15;
+
+            leftSpeed  = baseLeft  + straightCorrection;
+            rightSpeed = baseRight - straightCorrection;
+
+            lastError = 0;
+
+            setMotorSpeed(leftSpeed, rightSpeed);
+            leftMotorForward();
+            rightMotorForward();
+            return;
         }
 
         float derivative = error - lastError;
@@ -109,7 +120,7 @@ void updateMotion() {
 
         case FORWARD: {
 
-            driveForward(!turnPending);
+            driveForward(true);
 
             long avgTicks = (getLeftTicks() + getRightTicks()) / 2;
 
