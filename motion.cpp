@@ -9,11 +9,11 @@ RobotState currentState = FORWARD;
 
 #define HALF_CELL_TICKS 500
 
-#define TURN_TICKS_LEFT 400
+#define TURN_TICKS_LEFT 350
 #define TURN_TICKS_RIGHT 400
 
 #define DETECT_DELAY 450
-#define EXTRA_FORWARD_TICKS 100
+#define EXTRA_FORWARD_TICKS 200
 
 bool turnPending = false;
 RobotState nextTurn = FORWARD;
@@ -29,23 +29,45 @@ void driveForward(bool stabilize = true) {
     int leftSpeed  = baseLeft;
     int rightSpeed = baseRight;
 
-    if (stabilize && left < OPEN_THRESHOLD && right < OPEN_THRESHOLD) {
+    if (stabilize) {
 
         static float lastError = 0;
-
-        float targetOffset = 2.0;
-
-        float error = (left - right) - targetOffset;
-        float derivative = error - lastError;
 
         float Kp = 2.2;
         float Kd = 0.5;
 
+        float error = 0;
+
+        bool leftWall  = left  < OPEN_THRESHOLD;
+        bool rightWall = right < OPEN_THRESHOLD;
+
+        if (leftWall && rightWall) {
+
+            float targetOffset = 2.0;
+            error = (left - right) - targetOffset;
+        }
+
+        else if (leftWall) {
+
+            float targetLeft = 10.0;
+            error = (left - targetLeft);
+        }
+
+        else if (rightWall) {
+
+            float targetRight = 10.0;
+            error = -(right - targetRight);
+        }
+        
+        else {
+            error = 0;
+        }
+
+        float derivative = error - lastError;
         float correction = Kp * error + Kd * derivative;
 
         float maxCorrection = 50;
-        if (correction > maxCorrection) correction = maxCorrection;
-        if (correction < -maxCorrection) correction = -maxCorrection;
+        correction = constrain(correction, -maxCorrection, maxCorrection);
 
         leftSpeed  = baseLeft  - correction;
         rightSpeed = baseRight + correction;
@@ -54,7 +76,6 @@ void driveForward(bool stabilize = true) {
     }
 
     setMotorSpeed(leftSpeed, rightSpeed);
-
     leftMotorForward();
     rightMotorForward();
 }
