@@ -15,8 +15,12 @@ RobotState currentState = FORWARD;
 #define DETECT_DELAY 450
 #define EXTRA_FORWARD_TICKS 200
 
+#define FRONT_THRESHOLD 15   
+
 bool turnPending = false;
 RobotState nextTurn = FORWARD;
+
+bool turnAroundLeft = true;
 
 void driveForward(bool stabilize = true) {
 
@@ -115,6 +119,7 @@ void updateMotion() {
 
     float left  = getLeftFiltered();
     float right = getRightFiltered();
+    float front = getFrontFiltered();
 
     switch (currentState) {
 
@@ -126,14 +131,22 @@ void updateMotion() {
 
             RobotState newDecision = FORWARD;
 
-            if (left < OPEN_THRESHOLD && right > OPEN_THRESHOLD) {
+            if (left < OPEN_THRESHOLD && right < OPEN_THRESHOLD && front < FRONT_THRESHOLD) {
+
+                turnAroundLeft = (left > right);
+                newDecision = TURNING_AROUND;
+            }
+
+            else if (left < OPEN_THRESHOLD && right > OPEN_THRESHOLD) {
                 newDecision = TURNING_RIGHT;
             }
+
             else if (left > OPEN_THRESHOLD) {
                 newDecision = TURNING_LEFT;
             }
 
-            if (avgTicks > DETECT_DELAY && newDecision != FORWARD) {
+            if ((newDecision == TURNING_AROUND) ||
+                (avgTicks > DETECT_DELAY && newDecision != FORWARD)) {
 
                 nextTurn = newDecision;
 
@@ -148,7 +161,10 @@ void updateMotion() {
 
                 long ticksAfterDetect = (abs(getLeftTicks()) + abs(getRightTicks())) / 2;
 
-                if (ticksAfterDetect >= HALF_CELL_TICKS + EXTRA_FORWARD_TICKS) {
+                if (
+                    (nextTurn == TURNING_AROUND && ticksAfterDetect >= 100) || 
+                    (nextTurn != TURNING_AROUND && ticksAfterDetect >= HALF_CELL_TICKS + EXTRA_FORWARD_TICKS)
+                ) {
                     stop();
                     resetEncoders();
                     currentState = nextTurn;
@@ -192,7 +208,11 @@ void updateMotion() {
 
         case TURNING_AROUND: {
 
-            turnLeft();
+            if (turnAroundLeft) {
+                turnLeft();
+            } else {
+                turnRight();
+            }
 
             long ticks = (abs(getLeftTicks()) + abs(getRightTicks())) / 2;
 
