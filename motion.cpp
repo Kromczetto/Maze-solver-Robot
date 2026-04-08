@@ -15,7 +15,7 @@ RobotState currentState = FORWARD;
 #define DETECT_DELAY 450
 #define EXTRA_FORWARD_TICKS 200
 
-#define FRONT_THRESHOLD 15   
+#define FRONT_THRESHOLD 10   
 
 bool turnPending = false;
 RobotState nextTurn = FORWARD;
@@ -131,10 +131,10 @@ void updateMotion() {
 
             RobotState newDecision = FORWARD;
 
-            if (left < OPEN_THRESHOLD && right < OPEN_THRESHOLD && front < FRONT_THRESHOLD) {
+            if (left < OPEN_THRESHOLD && right < OPEN_THRESHOLD && front < 10) {
 
-                turnAroundLeft = (left > right);
-                newDecision = TURNING_AROUND;
+                currentState = TURNING_AROUND;
+                return;
             }
 
             else if (left < OPEN_THRESHOLD && right > OPEN_THRESHOLD) {
@@ -145,8 +145,7 @@ void updateMotion() {
                 newDecision = TURNING_LEFT;
             }
 
-            if ((newDecision == TURNING_AROUND) ||
-                (avgTicks > DETECT_DELAY && newDecision != FORWARD)) {
+            if (avgTicks > DETECT_DELAY && newDecision != FORWARD) {
 
                 nextTurn = newDecision;
 
@@ -161,10 +160,7 @@ void updateMotion() {
 
                 long ticksAfterDetect = (abs(getLeftTicks()) + abs(getRightTicks())) / 2;
 
-                if (
-                    (nextTurn == TURNING_AROUND && ticksAfterDetect >= 100) || 
-                    (nextTurn != TURNING_AROUND && ticksAfterDetect >= HALF_CELL_TICKS + EXTRA_FORWARD_TICKS)
-                ) {
+                if (nextTurn != TURNING_AROUND && ticksAfterDetect >= HALF_CELL_TICKS + EXTRA_FORWARD_TICKS) {
                     stop();
                     resetEncoders();
                     currentState = nextTurn;
