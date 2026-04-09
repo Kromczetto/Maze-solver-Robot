@@ -231,7 +231,36 @@ void updateMotion() {
             if (ticks >= TURN_TICKS_LEFT * 2) {
                 stop();
                 resetEncoders();
+                currentState = ALIGN_AFTER_TURN;
+            }
+
+            break;
+        }
+
+        case ALIGN_AFTER_TURN: {
+
+            float left  = getLeftFiltered();
+            float right = getRightFiltered();
+
+            float diff = left - right;
+
+            int base = 100;
+
+            if (abs(diff) < 1.5) {
+                stop();
+                resetEncoders();
                 currentState = FORWARD;
+                break;
+            }
+
+            if (diff > 0) {
+                setMotorSpeed(base, base);
+                leftMotorBackward();
+                rightMotorForward();
+            } else {
+                setMotorSpeed(base, base);
+                leftMotorForward();
+                rightMotorBackward();
             }
 
             break;
