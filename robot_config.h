@@ -4,4 +4,8 @@
   #define WALL_THRESHOLD_CM 10
   #define OPEN_THRESHOLD 18
 
+  #define FRONT_STOP_THRESHOLD 8
+  #define FRONT_OPEN_THRESHOLD 14
+  #define SIDE_OPEN_THRESHOLD 16
+
 #endif

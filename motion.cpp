@@ -137,28 +137,37 @@ void updateMotion() {
 
             long avgTicks = (getLeftTicks() + getRightTicks()) / 2;
 
+            bool leftOpen  = left  > OPEN_THRESHOLD;
+            bool frontOpen = front > FRONT_THRESHOLD;
+            bool rightOpen = right > OPEN_THRESHOLD;
+
             RobotState newDecision = FORWARD;
 
-            if (left < OPEN_THRESHOLD && right < OPEN_THRESHOLD && front < 10) {
+            if (!leftOpen && !rightOpen && !frontOpen) {
 
-                if (left > right) {
+                if (left > right + 2) {
                     turnAroundLeft = true;
-                } else {
+                }
+                else if (right > left + 2) {
                     turnAroundLeft = false;
+                }
+                else {
+                    turnAroundLeft = true;
                 }
 
                 resetEncoders();
-
                 currentState = TURNING_AROUND;
                 return;
             }
 
-            else if (left < OPEN_THRESHOLD && right > OPEN_THRESHOLD) {
-                newDecision = TURNING_RIGHT;
-            }
-
-            else if (left > OPEN_THRESHOLD) {
+            if (leftOpen) {
                 newDecision = TURNING_LEFT;
+            }
+            else if (frontOpen) {
+                newDecision = FORWARD;
+            }
+            else if (rightOpen) {
+                newDecision = TURNING_RIGHT;
             }
 
             if (avgTicks > DETECT_DELAY && newDecision != FORWARD) {
@@ -175,6 +184,14 @@ void updateMotion() {
             if (turnPending) {
 
                 long ticksAfterDetect = (abs(getLeftTicks()) + abs(getRightTicks())) / 2;
+
+                if (front < 7) {
+                    stop();
+                    resetEncoders();
+                    currentState = nextTurn;
+                    turnPending = false;
+                    return;
+                }
 
                 if (nextTurn != TURNING_AROUND && ticksAfterDetect >= HALF_CELL_TICKS + EXTRA_FORWARD_TICKS) {
                     stop();
