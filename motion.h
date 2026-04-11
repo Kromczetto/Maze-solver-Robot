@@ -11,9 +11,17 @@ enum RobotState {
     IDLE
 };
 
+enum NavigationAlgorithm {
+    LEFT_HAND,
+    FLOOD_FILL
+};
+
+extern NavigationAlgorithm currentAlgorithm;
+
 RobotState getRobotState();
 void updateMotion();
 
 void driveForward();
+
 
 #endif

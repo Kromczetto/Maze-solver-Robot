@@ -4,18 +4,9 @@
 #include "tof_sensors.h"
 #include "robot_config.h"
 #include "encoders.h"
+#include "left_hand.h"   
 
 RobotState currentState = FORWARD;
-
-#define HALF_CELL_TICKS 500
-
-#define TURN_TICKS_LEFT 400
-#define TURN_TICKS_RIGHT 400
-
-#define DETECT_DELAY 450
-#define EXTRA_FORWARD_TICKS 200
-
-#define FRONT_THRESHOLD 10   
 
 bool turnPending = false;
 RobotState nextTurn = FORWARD;
@@ -137,37 +128,12 @@ void updateMotion() {
 
             long avgTicks = (getLeftTicks() + getRightTicks()) / 2;
 
-            bool leftOpen  = left  > OPEN_THRESHOLD;
-            bool frontOpen = front > FRONT_THRESHOLD;
-            bool rightOpen = right > OPEN_THRESHOLD;
+            RobotState newDecision = decideLeftHand(left, front, right, turnAroundLeft);
 
-            RobotState newDecision = FORWARD;
-
-            if (!leftOpen && !rightOpen && !frontOpen) {
-
-                if (left > right + 2) {
-                    turnAroundLeft = true;
-                }
-                else if (right > left + 2) {
-                    turnAroundLeft = false;
-                }
-                else {
-                    turnAroundLeft = true;
-                }
-
+            if (newDecision == TURNING_AROUND) {
                 resetEncoders();
                 currentState = TURNING_AROUND;
                 return;
-            }
-
-            if (leftOpen) {
-                newDecision = TURNING_LEFT;
-            }
-            else if (frontOpen) {
-                newDecision = FORWARD;
-            }
-            else if (rightOpen) {
-                newDecision = TURNING_RIGHT;
             }
 
             if (avgTicks > DETECT_DELAY && newDecision != FORWARD) {

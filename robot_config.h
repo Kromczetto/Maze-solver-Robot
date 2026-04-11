@@ -8,4 +8,14 @@
   #define FRONT_OPEN_THRESHOLD 14
   #define SIDE_OPEN_THRESHOLD 16
 
+  #define HALF_CELL_TICKS 500
+
+  #define TURN_TICKS_LEFT 400
+  #define TURN_TICKS_RIGHT 400
+
+  #define DETECT_DELAY 450
+  #define EXTRA_FORWARD_TICKS 200
+
+  #define FRONT_THRESHOLD 10   
+
 #endif
