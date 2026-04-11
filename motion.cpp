@@ -1,118 +1,17 @@
-#include <Arduino.h>
 #include "motion.h"
-#include "motors.h"
+#include "drive.h"
+#include "turns.h"
+#include "navigator.h"
 #include "tof_sensors.h"
+#include <Arduino.h>
 #include "robot_config.h"
 #include "encoders.h"
-#include "left_hand.h"   
+#include "motors.h"
 
 RobotState currentState = FORWARD;
 
 bool turnPending = false;
 RobotState nextTurn = FORWARD;
-
-bool turnAroundLeft = true;
-
-void driveForward(bool stabilize = true) {
-
-    float left  = getLeftFiltered();
-    float right = getRightFiltered();
-
-    int baseLeft  = 100;
-    int baseRight = 130;
-
-    int leftSpeed  = baseLeft;
-    int rightSpeed = baseRight;
-
-    static float lastError = 0;
-
-    if (stabilize) {
-
-        float Kp = 2.2;
-        float Kd = 0.5;
-
-        float error = 0;
-
-        bool leftWall  = left  < OPEN_THRESHOLD;
-        bool rightWall = right < OPEN_THRESHOLD;
-
-        if (leftWall && rightWall) {
-            float targetOffset = 2.0;
-            error = (left - right) - targetOffset;
-        }
-        else if (leftWall) {
-            float targetLeft = 10.0;
-            error = (left - targetLeft);
-        }
-        else if (rightWall) {
-            float targetRight = 10.0;
-            error = -(right - targetRight);
-        }
-        else {
-
-            static long lastLeftTicks = 0;
-            static long lastRightTicks = 0;
-
-            long leftTicks  = getLeftTicks();
-            long rightTicks = getRightTicks();
-
-            long dLeft  = leftTicks  - lastLeftTicks;
-            long dRight = rightTicks - lastRightTicks;
-
-            lastLeftTicks  = leftTicks;
-            lastRightTicks = rightTicks;
-
-            float errorEnc = (float)(dLeft - dRight);
-
-            float KpEnc = 1.5;
-            float correction = KpEnc * errorEnc;
-
-            correction = constrain(correction, -30, 30);
-
-            leftSpeed  = baseLeft  - correction;
-            rightSpeed = baseRight + correction;
-
-            setMotorSpeed(leftSpeed, rightSpeed);
-            leftMotorForward();
-            rightMotorForward();
-            return;
-        }
-
-        float derivative = error - lastError;
-        float correction = Kp * error + Kd * derivative;
-
-        correction = constrain(correction, -50, 50);
-
-        leftSpeed  = baseLeft  - correction;
-        rightSpeed = baseRight + correction;
-
-        lastError = error;
-    }
-
-    setMotorSpeed(leftSpeed, rightSpeed);
-    leftMotorForward();
-    rightMotorForward();
-}
-
-void turnLeft() {
-    setMotorSpeed(100, 100);
-    leftMotorBackward();
-    rightMotorForward();
-}
-
-void turnRight() {
-    setMotorSpeed(100, 100);
-    leftMotorForward();
-    rightMotorBackward();
-}
-
-void stop() {
-    stopMotors();
-}
-
-RobotState getRobotState() {
-    return currentState;
-}
 
 void updateMotion() {
 
@@ -128,7 +27,7 @@ void updateMotion() {
 
             long avgTicks = (getLeftTicks() + getRightTicks()) / 2;
 
-            RobotState newDecision = decideLeftHand(left, front, right, turnAroundLeft);
+            RobotState newDecision = getNavigationDecision(left, front, right);
 
             if (newDecision == TURNING_AROUND) {
                 resetEncoders();
@@ -203,11 +102,7 @@ void updateMotion() {
 
         case TURNING_AROUND: {
 
-            if (turnAroundLeft) {
-                turnLeft();
-            } else {
-                turnRight();
-            }
+            turnLeft();
 
             long ticks = (abs(getLeftTicks()) + abs(getRightTicks())) / 2;
 
@@ -221,9 +116,6 @@ void updateMotion() {
         }
 
         case ALIGN_AFTER_TURN: {
-
-            float left  = getLeftFiltered();
-            float right = getRightFiltered();
 
             float diff = left - right;
 
@@ -253,4 +145,8 @@ void updateMotion() {
             stop();
             break;
     }
+}
+
+RobotState getRobotState() {
+    return currentState;
 }
