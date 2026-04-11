@@ -3,7 +3,6 @@
 
 enum RobotState {
     FORWARD,
-    DECIDE,
     TURNING_LEFT,
     TURNING_RIGHT,
     TURNING_AROUND,
@@ -20,8 +19,5 @@ extern NavigationAlgorithm currentAlgorithm;
 
 RobotState getRobotState();
 void updateMotion();
-
-void driveForward();
-
 
 #endif
