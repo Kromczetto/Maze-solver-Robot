@@ -5,6 +5,7 @@
 #include "motion.h"
 #include "tof_sensors.h"
 #include "encoders.h"
+#include "maze.h"
 
 SoftwareSerial SUART(A1, A2);
 
@@ -35,6 +36,13 @@ void sendTelemetry() {
 
     const char* state = getStateString();
 
+    uint8_t walls = 0;
+
+    if (hasWall(getRobotX(), getRobotY(), 0)) walls |= 1 << 0;
+    if (hasWall(getRobotX(), getRobotY(), 1)) walls |= 1 << 1;
+    if (hasWall(getRobotX(), getRobotY(), 2)) walls |= 1 << 2;
+    if (hasWall(getRobotX(), getRobotY(), 3)) walls |= 1 << 3;
+
     SUART.print(front);
     SUART.print(",");
     SUART.print(left);
@@ -43,7 +51,15 @@ void sendTelemetry() {
     SUART.print(",");
     SUART.print(angle);
     SUART.print(",");
-    SUART.println(state);
+    SUART.print(state);
+    SUART.print(",");
+    SUART.print(getRobotX());
+    SUART.print(",");
+    SUART.print(getRobotY());
+    SUART.print(",");
+    SUART.print((int)getRobotDir());
+    SUART.print(",");
+    SUART.println(walls); 
 }
 
 void setup() {
@@ -53,6 +69,7 @@ void setup() {
     initMotors();
     initSensors();
     initEncoders();
+    initMaze();
 
 }
 

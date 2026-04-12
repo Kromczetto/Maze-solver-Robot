@@ -7,11 +7,14 @@
 #include "robot_config.h"
 #include "encoders.h"
 #include "motors.h"
+#include "maze.h"
 
 RobotState currentState = FORWARD;
 
 bool turnPending = false;
+bool turnAroundLeftDirection = true;
 RobotState nextTurn = FORWARD;
+static long lastCellTicks = 0;
 
 void updateMotion() {
 
@@ -29,8 +32,15 @@ void updateMotion() {
 
             RobotState newDecision = getNavigationDecision(left, front, right);
 
+            if (avgTicks - lastCellTicks >= HALF_CELL_TICKS*2) {
+                updatePosition();
+                updateWalls(left, front, right);
+                lastCellTicks = avgTicks;
+            }
+
             if (newDecision == TURNING_AROUND) {
                 resetEncoders();
+                lastCellTicks = 0; 
                 currentState = TURNING_AROUND;
                 return;
             }
@@ -42,6 +52,7 @@ void updateMotion() {
                 if (!turnPending) {
                     turnPending = true;
                     resetEncoders();
+                    lastCellTicks = 0; 
                     return;
                 }
             }
@@ -50,9 +61,10 @@ void updateMotion() {
 
                 long ticksAfterDetect = (abs(getLeftTicks()) + abs(getRightTicks())) / 2;
 
-                if (front < 7) {
+                if (front < 10) {
                     stop();
                     resetEncoders();
+                    lastCellTicks = 0; 
                     currentState = nextTurn;
                     turnPending = false;
                     return;
@@ -61,6 +73,7 @@ void updateMotion() {
                 if (nextTurn != TURNING_AROUND && ticksAfterDetect >= HALF_CELL_TICKS + EXTRA_FORWARD_TICKS) {
                     stop();
                     resetEncoders();
+                    lastCellTicks = 0; 
                     currentState = nextTurn;
                     turnPending = false;
                     return;
@@ -79,6 +92,8 @@ void updateMotion() {
             if (ticks >= TURN_TICKS_LEFT) {
                 stop();
                 resetEncoders();
+                lastCellTicks = 0; 
+                updateDirection(-1);
                 currentState = FORWARD;
             }
 
@@ -94,6 +109,8 @@ void updateMotion() {
             if (ticks >= TURN_TICKS_RIGHT) {
                 stop();
                 resetEncoders();
+                lastCellTicks = 0; 
+                updateDirection(1);
                 currentState = FORWARD;
             }
 
@@ -109,6 +126,8 @@ void updateMotion() {
             if (ticks >= TURN_TICKS_LEFT * 2) {
                 stop();
                 resetEncoders();
+                lastCellTicks = 0; 
+                updateDirection(2);
                 currentState = ALIGN_AFTER_TURN;
             }
 
