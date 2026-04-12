@@ -15,6 +15,7 @@ bool turnPending = false;
 bool turnAroundLeftDirection = true;
 RobotState nextTurn = FORWARD;
 static long lastCellTicks = 0;
+static bool alignDone = false;
 
 void updateMotion() {
 
@@ -32,7 +33,7 @@ void updateMotion() {
 
             RobotState newDecision = getNavigationDecision(left, front, right);
 
-            if (avgTicks - lastCellTicks >= HALF_CELL_TICKS*2) {
+            if (avgTicks - lastCellTicks >= HALF_CELL_TICKS * 2 - 250) {
                 updatePosition();
                 updateWalls(left, front, right);
                 lastCellTicks = avgTicks;
@@ -61,10 +62,10 @@ void updateMotion() {
 
                 long ticksAfterDetect = (abs(getLeftTicks()) + abs(getRightTicks())) / 2;
 
-                if (front < 10) {
+                if (front < 7) {
                     stop();
                     resetEncoders();
-                    lastCellTicks = 0; 
+                    // lastCellTicks = 0; 
                     currentState = nextTurn;
                     turnPending = false;
                     return;
@@ -73,7 +74,7 @@ void updateMotion() {
                 if (nextTurn != TURNING_AROUND && ticksAfterDetect >= HALF_CELL_TICKS + EXTRA_FORWARD_TICKS) {
                     stop();
                     resetEncoders();
-                    lastCellTicks = 0; 
+                    // lastCellTicks = 0; 
                     currentState = nextTurn;
                     turnPending = false;
                     return;
@@ -92,7 +93,7 @@ void updateMotion() {
             if (ticks >= TURN_TICKS_LEFT) {
                 stop();
                 resetEncoders();
-                lastCellTicks = 0; 
+                // lastCellTicks = 0; 
                 updateDirection(-1);
                 currentState = FORWARD;
             }
@@ -109,7 +110,7 @@ void updateMotion() {
             if (ticks >= TURN_TICKS_RIGHT) {
                 stop();
                 resetEncoders();
-                lastCellTicks = 0; 
+                // lastCellTicks = 0; 
                 updateDirection(1);
                 currentState = FORWARD;
             }
@@ -126,7 +127,7 @@ void updateMotion() {
             if (ticks >= TURN_TICKS_LEFT * 2) {
                 stop();
                 resetEncoders();
-                lastCellTicks = 0; 
+                // lastCellTicks = 0; 
                 updateDirection(2);
                 currentState = ALIGN_AFTER_TURN;
             }
@@ -136,25 +137,46 @@ void updateMotion() {
 
         case ALIGN_AFTER_TURN: {
 
-            float diff = left - right;
+            int base = 110;
 
-            int base = 100;
+            if (!alignDone) {
 
-            if (abs(diff) < 1.5) {
-                stop();
-                resetEncoders();
-                currentState = FORWARD;
+                float diff = left - right;
+
+                if (abs(diff) < 1.5) {
+                    stop();
+                    resetEncoders();
+
+                    alignDone = true;
+                    break;
+                }
+
+                if (diff > 0) {
+                    setMotorSpeed(base, base);
+                    leftMotorBackward();
+                    rightMotorForward();
+                } else {
+                    setMotorSpeed(base, base);
+                    leftMotorForward();
+                    rightMotorBackward();
+                }
+
                 break;
             }
 
-            if (diff > 0) {
-                setMotorSpeed(base, base);
-                leftMotorBackward();
-                rightMotorForward();
-            } else {
-                setMotorSpeed(base, base);
-                leftMotorForward();
-                rightMotorBackward();
+            setMotorSpeed(110, 110);
+            leftMotorBackward();
+            rightMotorBackward();
+
+            long ticks = (abs(getLeftTicks()) + abs(getRightTicks())) / 2;
+
+            if (ticks >= 100) { 
+                stop();
+                resetEncoders();
+
+                alignDone = false; 
+
+                currentState = FORWARD;
             }
 
             break;
