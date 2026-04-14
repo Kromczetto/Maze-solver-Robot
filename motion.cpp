@@ -40,6 +40,7 @@ void updateMotion() {
             }
 
             if (newDecision == TURNING_AROUND) {
+                turnAroundLeftDirection = (left > right);
                 resetEncoders();
                 lastCellTicks = 0; 
                 currentState = TURNING_AROUND;
@@ -120,7 +121,11 @@ void updateMotion() {
 
         case TURNING_AROUND: {
 
-            turnLeft();
+            if (turnAroundLeftDirection) {
+                turnLeft();
+            } else {
+                turnRight();
+            }
 
             long ticks = (abs(getLeftTicks()) + abs(getRightTicks())) / 2;
 
@@ -168,17 +173,8 @@ void updateMotion() {
             leftMotorBackward();
             rightMotorBackward();
 
-            long ticks = (abs(getLeftTicks()) + abs(getRightTicks())) / 2;
-
-            if (ticks >= 100) { 
-                stop();
-                resetEncoders();
-
-                alignDone = false; 
-
-                currentState = FORWARD;
-            }
-
+            currentState = FORWARD;
+          
             break;
         }
 
