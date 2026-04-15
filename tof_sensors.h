@@ -11,4 +11,6 @@ float getRightFiltered();
 float getLeftFiltered();
 float getFrontFiltered();
 
+void updateTOF();
+
 #endif

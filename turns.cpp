@@ -2,13 +2,13 @@
 #include "motors.h"
 
 void turnLeft() {
-    setMotorSpeed(110, 110);
+    setMotorSpeed(100, 100);
     leftMotorBackward();
     rightMotorForward();
 }
 
 void turnRight() {
-    setMotorSpeed(110, 110);
+    setMotorSpeed(100, 100);
     leftMotorForward();
     rightMotorBackward();
 }

@@ -8,12 +8,21 @@
 #define XSHUT_RIGHT A0
 
 #define FILTER_SIZE 5
+#define FRONT_OFFSET_CM 3.0
 
 VL53L0X sensorLeft;
 VL53L0X sensorFront;
 VL53L0X sensorRight;
 
-float leftBuffer[FILTER_SIZE]  = {200,200,200,200,200};
+float leftFiltered = 200;
+float rightFiltered = 200;
+float frontFiltered = 200;
+
+float lastLeft = 200;
+float lastRight = 200;
+float lastFront = 200;
+
+float leftBuffer[FILTER_SIZE] = {200,200,200,200,200};
 float rightBuffer[FILTER_SIZE] = {200,200,200,200,200};
 float frontBuffer[FILTER_SIZE] = {200,200,200,200,200};
 
@@ -42,16 +51,25 @@ float medianFilter(float newValue, float *buffer) {
     return temp[FILTER_SIZE / 2];
 }
 
-float filterDistance(uint16_t d) {
+float readTOF(VL53L0X &sensor, float &last) {
 
-    if (d == 0 || d == 65535 || d > 2000) return 200;
+    uint16_t d = sensor.readRangeContinuousMillimeters();
+    float val;
 
-    return d / 10.0; 
+    if (sensor.timeoutOccurred() || d == 0 || d == 65535) {
+        val = last; 
+    } else {
+        val = d / 10.0;
+        last = val;
+    }
+
+    return val;
 }
 
 void initSensors() {
 
     Wire.begin();
+    Wire.setTimeout(5); 
 
     pinMode(XSHUT_LEFT, OUTPUT);
     pinMode(XSHUT_FRONT, OUTPUT);
@@ -64,66 +82,58 @@ void initSensors() {
 
     digitalWrite(XSHUT_LEFT, HIGH);
     delay(100);
-
     sensorLeft.init();
     sensorLeft.setAddress(0x30);
+    sensorLeft.setTimeout(100);
+    sensorLeft.setMeasurementTimingBudget(50000);
     sensorLeft.startContinuous();
-    sensorLeft.setTimeout(50);
 
     digitalWrite(XSHUT_FRONT, HIGH);
     delay(100);
-
     sensorFront.init();
     sensorFront.setAddress(0x31);
+    sensorFront.setTimeout(100);
+    sensorFront.setMeasurementTimingBudget(50000);
     sensorFront.startContinuous();
-    sensorFront.setTimeout(50);
 
-    // RIGHT
     digitalWrite(XSHUT_RIGHT, HIGH);
     delay(100);
-
     sensorRight.init();
     sensorRight.setAddress(0x33);
-    sensorRight.startContinuous();
-    sensorRight.setTimeout(50);
-
-    sensorLeft.setMeasurementTimingBudget(50000);
-    sensorFront.setMeasurementTimingBudget(50000);
+    sensorRight.setTimeout(100);
     sensorRight.setMeasurementTimingBudget(50000);
+    sensorRight.startContinuous();
 }
 
-float readTOF(VL53L0X &sensor) {
+void updateTOF() {
 
-    uint16_t d = sensor.readRangeContinuousMillimeters();
+    float leftRaw = readTOF(sensorLeft, lastLeft);
+    float rightRaw = readTOF(sensorRight, lastRight);
+    float frontRaw = readTOF(sensorFront, lastFront);
 
-    if (sensor.timeoutOccurred()) return 200;
+    float leftMed = medianFilter(leftRaw, leftBuffer);
+    float rightMed = medianFilter(rightRaw, rightBuffer);
+    float frontMed = medianFilter(frontRaw, frontBuffer);
 
-    return filterDistance(d);
-}
-
-float getFrontDistance() {
-    return readTOF(sensorFront);
-}
-
-float getLeftDistance() {
-    return readTOF(sensorLeft);
-}
-
-float getRightDistance() {
-    return readTOF(sensorRight);
+    leftFiltered = 0.7 * leftFiltered  + 0.3 * leftMed;
+    rightFiltered = 0.7 * rightFiltered + 0.3 * rightMed;
+    frontFiltered = 0.7 * frontFiltered + 0.3 * frontMed;
 }
 
 float getLeftFiltered() {
-    float raw = getLeftDistance();
-    return medianFilter(raw, leftBuffer);
+    return leftFiltered;
 }
 
 float getRightFiltered() {
-    float raw = getRightDistance();
-    return medianFilter(raw, rightBuffer);
+    return rightFiltered;
 }
 
 float getFrontFiltered() {
-    float raw = getFrontDistance();
-    return medianFilter(raw, frontBuffer);
+    float v = frontFiltered - FRONT_OFFSET_CM;
+    if (v < 0) v = 0;
+    return v;
 }
+
+float getLeftDistance() { return lastLeft; }
+float getRightDistance() { return lastRight; }
+float getFrontDistance() { return lastFront; }

@@ -10,8 +10,8 @@ void driveForward(bool stabilize) {
     float left  = getLeftFiltered();
     float right = getRightFiltered();
 
-    int baseLeft  = 100;
-    int baseRight = 130;
+    int baseLeft  = 95;
+    int baseRight = 100;
 
     int leftSpeed  = baseLeft;
     int rightSpeed = baseRight;
@@ -20,28 +20,27 @@ void driveForward(bool stabilize) {
 
     if (stabilize) {
 
-        float Kp = 2.2;
-        float Kd = 0.5;
+        float Kp = 1.8;
+        float Kd = 0.3;
 
         float error = 0;
 
         bool leftWall  = left  < OPEN_THRESHOLD;
         bool rightWall = right < OPEN_THRESHOLD;
 
+        // 🔥 ZAWSZE licz jakiś error (brak skoków trybu)
+
         if (leftWall && rightWall) {
-            float targetOffset = 2.0;
-            error = (left - right) - targetOffset;
+            error = (left - right);
         }
         else if (leftWall) {
-            float targetLeft = 10.0;
-            error = (left - targetLeft);
+            error = (left - 10.0);
         }
         else if (rightWall) {
-            float targetRight = 10.0;
-            error = -(right - targetRight);
+            error = -(right - 10.0);
         }
         else {
-
+            // 🔥 fallback na encoder (ALE miękki)
             static long lastLeftTicks = 0;
             static long lastRightTicks = 0;
 
@@ -54,29 +53,24 @@ void driveForward(bool stabilize) {
             lastLeftTicks  = leftTicks;
             lastRightTicks = rightTicks;
 
-            float errorEnc = (float)(dLeft - dRight);
-
-            float KpEnc = 1.5;
-            float correction = KpEnc * errorEnc;
-
-            correction = constrain(correction, -30, 30);
-
-            leftSpeed  = baseLeft  - correction;
-            rightSpeed = baseRight + correction;
-
-            setMotorSpeed(leftSpeed, rightSpeed);
-            leftMotorForward();
-            rightMotorForward();
-            return;
+            error = (float)(dLeft - dRight) * 0.5; // 🔥 słabszy wpływ
         }
 
+        // 🔥 derivative z limiterem
         float derivative = error - lastError;
+        if (abs(derivative) > 10) derivative = 0;
+
         float correction = Kp * error + Kd * derivative;
 
-        correction = constrain(correction, -50, 50);
+        // 🔥 mniejszy zakres
+        correction = constrain(correction, -25, 25);
 
         leftSpeed  = baseLeft  - correction;
         rightSpeed = baseRight + correction;
+
+        // 🔥 minimalna prędkość
+        leftSpeed  = constrain(leftSpeed, 70, 150);
+        rightSpeed = constrain(rightSpeed, 70, 150);
 
         lastError = error;
     }

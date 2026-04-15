@@ -14,12 +14,15 @@ RobotState currentState = FORWARD;
 bool turnPending = false;
 bool turnAroundLeftDirection = true;
 RobotState nextTurn = FORWARD;
+
 static long lastCellTicks = 0;
 static bool alignDone = false;
 
+static int decisionCooldown = 0;
+
 void updateMotion() {
 
-    float left  = getLeftFiltered();
+    float left = getLeftFiltered();
     float right = getRightFiltered();
     float front = getFrontFiltered();
 
@@ -31,7 +34,11 @@ void updateMotion() {
 
             long avgTicks = (getLeftTicks() + getRightTicks()) / 2;
 
-            RobotState newDecision = getNavigationDecision(left, front, right);
+            RobotState newDecision = FORWARD;
+
+            if (!turnPending && decisionCooldown == 0) {
+                newDecision = getNavigationDecision(left, front, right);
+            }
 
             if (avgTicks - lastCellTicks >= HALF_CELL_TICKS * 2 - 250) {
                 updatePosition();
@@ -39,24 +46,24 @@ void updateMotion() {
                 lastCellTicks = avgTicks;
             }
 
-            if (newDecision == TURNING_AROUND) {
+            if (newDecision == TURNING_AROUND && !turnPending) {
                 turnAroundLeftDirection = (left > right);
                 resetEncoders();
-                lastCellTicks = 0; 
+                lastCellTicks = 0;
                 currentState = TURNING_AROUND;
+                decisionCooldown = 10;
                 return;
             }
 
-            if (avgTicks > DETECT_DELAY && newDecision != FORWARD) {
+            if (avgTicks > DETECT_DELAY && newDecision != FORWARD && !turnPending) {
 
                 nextTurn = newDecision;
+                turnPending = true;
 
-                if (!turnPending) {
-                    turnPending = true;
-                    resetEncoders();
-                    lastCellTicks = 0; 
-                    return;
-                }
+                resetEncoders();
+                lastCellTicks = 0;
+                decisionCooldown = 10;
+                return;
             }
 
             if (turnPending) {
@@ -66,21 +73,23 @@ void updateMotion() {
                 if (front < 7) {
                     stop();
                     resetEncoders();
-                    // lastCellTicks = 0; 
                     currentState = nextTurn;
                     turnPending = false;
                     return;
                 }
 
-                if (nextTurn != TURNING_AROUND && ticksAfterDetect >= HALF_CELL_TICKS + EXTRA_FORWARD_TICKS) {
+                if (nextTurn != TURNING_AROUND &&
+                    ticksAfterDetect >= HALF_CELL_TICKS + EXTRA_FORWARD_TICKS) {
+
                     stop();
                     resetEncoders();
-                    // lastCellTicks = 0; 
                     currentState = nextTurn;
                     turnPending = false;
                     return;
                 }
             }
+
+            if (decisionCooldown > 0) decisionCooldown--;
 
             break;
         }
@@ -94,7 +103,6 @@ void updateMotion() {
             if (ticks >= TURN_TICKS_LEFT) {
                 stop();
                 resetEncoders();
-                // lastCellTicks = 0; 
                 updateDirection(-1);
                 currentState = FORWARD;
             }
@@ -111,7 +119,6 @@ void updateMotion() {
             if (ticks >= TURN_TICKS_RIGHT) {
                 stop();
                 resetEncoders();
-                // lastCellTicks = 0; 
                 updateDirection(1);
                 currentState = FORWARD;
             }
@@ -132,7 +139,6 @@ void updateMotion() {
             if (ticks >= TURN_TICKS_LEFT * 2) {
                 stop();
                 resetEncoders();
-                // lastCellTicks = 0; 
                 updateDirection(2);
                 currentState = ALIGN_AFTER_TURN;
             }
@@ -151,7 +157,6 @@ void updateMotion() {
                 if (abs(diff) < 1.5) {
                     stop();
                     resetEncoders();
-
                     alignDone = true;
                     break;
                 }
@@ -174,7 +179,7 @@ void updateMotion() {
             rightMotorBackward();
 
             currentState = FORWARD;
-          
+
             break;
         }
 

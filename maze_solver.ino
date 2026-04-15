@@ -27,11 +27,9 @@ const char* getStateString() {
 
 void sendTelemetry() {
 
-    SUART.listen();  
-
-    int front = (int)getFrontDistance();
-    int left  = (int)getLeftDistance();
-    int right = (int)getRightDistance();
+    int front = (int)getFrontFiltered();
+    int left = (int)getLeftFiltered();
+    int right = (int)getRightFiltered();
     int angle = 0;
 
     const char* state = getStateString();
@@ -88,8 +86,8 @@ void loop() {
         }
     }
 
+    updateTOF();
     if (robotEnabled) {
-
         updateMotion();
 
     }
