@@ -10,8 +10,8 @@ void driveForward(bool stabilize) {
     float left  = getLeftFiltered();
     float right = getRightFiltered();
 
-    int baseLeft  = 95;
-    int baseRight = 100;
+    int baseLeft  = 100;
+    int baseRight = 118;
 
     int leftSpeed  = baseLeft;
     int rightSpeed = baseRight;
@@ -28,8 +28,6 @@ void driveForward(bool stabilize) {
         bool leftWall  = left  < OPEN_THRESHOLD;
         bool rightWall = right < OPEN_THRESHOLD;
 
-        // 🔥 ZAWSZE licz jakiś error (brak skoków trybu)
-
         if (leftWall && rightWall) {
             error = (left - right);
         }
@@ -40,7 +38,7 @@ void driveForward(bool stabilize) {
             error = -(right - 10.0);
         }
         else {
-            // 🔥 fallback na encoder (ALE miękki)
+
             static long lastLeftTicks = 0;
             static long lastRightTicks = 0;
 
@@ -53,22 +51,19 @@ void driveForward(bool stabilize) {
             lastLeftTicks  = leftTicks;
             lastRightTicks = rightTicks;
 
-            error = (float)(dLeft - dRight) * 0.5; // 🔥 słabszy wpływ
+            error = (float)(dLeft - dRight) * 0.5;
         }
 
-        // 🔥 derivative z limiterem
         float derivative = error - lastError;
         if (abs(derivative) > 10) derivative = 0;
 
         float correction = Kp * error + Kd * derivative;
 
-        // 🔥 mniejszy zakres
         correction = constrain(correction, -25, 25);
 
         leftSpeed  = baseLeft  - correction;
         rightSpeed = baseRight + correction;
 
-        // 🔥 minimalna prędkość
         leftSpeed  = constrain(leftSpeed, 70, 150);
         rightSpeed = constrain(rightSpeed, 70, 150);
 

@@ -4,7 +4,7 @@
   #define WALL_THRESHOLD_CM 10
   #define OPEN_THRESHOLD 16
 
-  #define FRONT_STOP_THRESHOLD 8
+  #define FRONT_STOP_THRESHOLD 12
   #define FRONT_OPEN_THRESHOLD 14
   #define SIDE_OPEN_THRESHOLD 16
 
@@ -16,7 +16,7 @@
   #define DETECT_DELAY 450
   #define EXTRA_FORWARD_TICKS 200
 
-  #define FRONT_THRESHOLD 10   
+  #define FRONT_THRESHOLD 7   
   #define OPEN_THRESHOLD_STRONG 18
 
 #endif

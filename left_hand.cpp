@@ -3,7 +3,7 @@
 
 RobotState decideLeftHand(float left, float front, float right, bool &turnAroundLeft) {
 
-    bool leftOpen  = left > OPEN_THRESHOLD_STRONG;
+    bool leftOpen = left > OPEN_THRESHOLD_STRONG;
     bool frontOpen = front > FRONT_THRESHOLD;
     bool rightOpen = right > OPEN_THRESHOLD_STRONG;
 
