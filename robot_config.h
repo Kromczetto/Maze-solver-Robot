@@ -19,4 +19,6 @@
   #define FRONT_THRESHOLD 7   
   #define OPEN_THRESHOLD_STRONG 18
 
+  #define MOTOR_BALANCE 18
+
 #endif
