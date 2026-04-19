@@ -10,8 +10,8 @@
 
   #define HALF_CELL_TICKS 500
 
-  #define TURN_TICKS_LEFT 400
-  #define TURN_TICKS_RIGHT 400
+  #define TURN_TICKS_LEFT 350
+  #define TURN_TICKS_RIGHT 350
 
   #define DETECT_DELAY 500
   #define EXTRA_FORWARD_TICKS 200

@@ -11,7 +11,7 @@ void driveForward(bool stabilize) {
     float right = getRightFiltered();
 
     int baseLeft = 100;
-    int baseRight = 116;
+    int baseRight = 118;
 
     int leftSpeed = baseLeft;
     int rightSpeed = baseRight;
