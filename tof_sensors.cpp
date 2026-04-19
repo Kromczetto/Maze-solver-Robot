@@ -125,7 +125,7 @@ float getLeftFiltered() {
 }
 
 float getRightFiltered() {
-    return rightFiltered;
+    return rightFiltered - 1.0;
 }
 
 float getFrontFiltered() {

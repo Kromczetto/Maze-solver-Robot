@@ -10,8 +10,8 @@ void driveForward(bool stabilize) {
     float left = getLeftFiltered();
     float right = getRightFiltered();
 
-    int baseLeft = 100;
-    int baseRight = 118;
+    int baseLeft = 105;
+    int baseRight = 115;
 
     int leftSpeed = baseLeft;
     int rightSpeed = baseRight;
@@ -20,8 +20,8 @@ void driveForward(bool stabilize) {
 
     if (stabilize) {
 
-        float Kp = 1.8;
-        float Kd = 0.3;
+        float Kp = 1.3;
+        float Kd = 0.4;
 
         float error = 0;
 
@@ -31,12 +31,15 @@ void driveForward(bool stabilize) {
         if (leftWall && rightWall) {
             error = (left - right);
         }
+
         else if (leftWall) {
             error = (left - 10.0);
         }
+
         else if (rightWall) {
             error = -(right - 10.0);
         }
+
         else {
             static long lastLeftTicks = 0;
             static long lastRightTicks = 0;
@@ -50,21 +53,24 @@ void driveForward(bool stabilize) {
             lastLeftTicks  = leftTicks;
             lastRightTicks = rightTicks;
 
-            error = (float)(dLeft - dRight) * 0.5;
+            error = (float)(dLeft - dRight) * 0.4;
         }
 
+        if (abs(error) < 1.5) error = 0;
+
         float derivative = error - lastError;
-        if (abs(derivative) > 10) derivative = 0;
+
+        if (abs(derivative) > 8) derivative = 0;
 
         float correction = Kp * error + Kd * derivative;
 
-        correction = constrain(correction, -25, 25);
+        correction = constrain(correction, -18, 18);
 
         leftSpeed = baseLeft - correction;
         rightSpeed = baseRight + correction;
 
-        leftSpeed = constrain(leftSpeed, 70, 150);
-        rightSpeed = constrain(rightSpeed, 70, 150);
+        leftSpeed = constrain(leftSpeed, 80, 140);
+        rightSpeed = constrain(rightSpeed, 80, 140);
 
         lastError = error;
     }
