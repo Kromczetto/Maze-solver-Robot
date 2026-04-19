@@ -6,6 +6,7 @@
 #include "tof_sensors.h"
 #include "encoders.h"
 #include "maze.h"
+#include "drive.h"
 
 SoftwareSerial SUART(A1, A2);
 
@@ -89,7 +90,6 @@ void loop() {
     updateTOF();
     if (robotEnabled) {
         updateMotion();
-
     }
 
     if (millis() - lastTelemetry > TELEMETRY_INTERVAL) {

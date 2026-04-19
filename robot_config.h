@@ -13,12 +13,13 @@
   #define TURN_TICKS_LEFT 400
   #define TURN_TICKS_RIGHT 400
 
-  #define DETECT_DELAY 450
+  #define DETECT_DELAY 500
   #define EXTRA_FORWARD_TICKS 200
 
   #define FRONT_THRESHOLD 7   
   #define OPEN_THRESHOLD_STRONG 18
 
   #define MOTOR_BALANCE 18
+  #define TICKS_PER_CELL 1050
 
 #endif
