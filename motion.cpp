@@ -28,7 +28,7 @@ void updateMotion() {
 
             driveForward(true);
 
-            if (avgTicks >= TICKS_PER_CELL || front < 7) {
+            if (avgTicks >= TICKS_PER_CELL || front < 6) {
 
                 stopMotors();
 
