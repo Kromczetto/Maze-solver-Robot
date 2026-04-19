@@ -33,11 +33,11 @@ void driveForward(bool stabilize) {
         }
 
         else if (leftWall) {
-            error = (left - 10.0);
+            error = (left - 9.0);
         }
 
         else if (rightWall) {
-            error = -(right - 10.0);
+            error = -(right - 9.0);
         }
 
         else {

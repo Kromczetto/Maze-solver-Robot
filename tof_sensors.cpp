@@ -7,7 +7,7 @@
 #define XSHUT_FRONT 13
 #define XSHUT_RIGHT A0
 
-#define FILTER_SIZE 5
+#define FILTER_SIZE 3
 #define FRONT_OFFSET_CM 3.0
 
 VL53L0X sensorLeft;
@@ -22,9 +22,9 @@ float lastLeft = 200;
 float lastRight = 200;
 float lastFront = 200;
 
-float leftBuffer[FILTER_SIZE] = {200,200,200,200,200};
-float rightBuffer[FILTER_SIZE] = {200,200,200,200,200};
-float frontBuffer[FILTER_SIZE] = {200,200,200,200,200};
+float leftBuffer[FILTER_SIZE] = {200,200,200};
+float rightBuffer[FILTER_SIZE] = {200,200,200};
+float frontBuffer[FILTER_SIZE] = {200,200,200};
 
 float medianFilter(float newValue, float *buffer) {
 
@@ -115,9 +115,9 @@ void updateTOF() {
     float rightMed = medianFilter(rightRaw, rightBuffer);
     float frontMed = medianFilter(frontRaw, frontBuffer);
 
-    leftFiltered = 0.7 * leftFiltered  + 0.3 * leftMed;
-    rightFiltered = 0.7 * rightFiltered + 0.3 * rightMed;
-    frontFiltered = 0.7 * frontFiltered + 0.3 * frontMed;
+    leftFiltered  = 0.5 * leftFiltered  + 0.5 * leftMed;
+    rightFiltered = 0.5 * rightFiltered + 0.5 * rightMed;
+    frontFiltered = 0.5 * frontFiltered + 0.5 * frontMed;
 }
 
 float getLeftFiltered() {

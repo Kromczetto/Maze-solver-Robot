@@ -12,7 +12,7 @@
 RobotState currentState = FORWARD;
 
 bool turnAroundLeftDirection = true;
-#define POST_TURN_FORWARD_TICKS 300
+#define POST_TURN_FORWARD_TICKS 275
 
 void updateMotion() {
 
@@ -109,7 +109,7 @@ void updateMotion() {
 
             long ticks = (abs(getLeftTicks()) + abs(getRightTicks())) / 2;
 
-            if (ticks >= TURN_TICKS_LEFT * 2 + 50) {
+            if (ticks >= TURN_TICKS_LEFT * 2 + 100) {
                 stopMotors();
                 updateDirection(2);
                 resetEncoders();
