@@ -6,7 +6,7 @@ enum RobotState {
     TURNING_LEFT,
     TURNING_RIGHT,
     TURNING_AROUND,
-    ALIGN_AFTER_TURN,
+    POST_TURN_FORWARD,
     IDLE
 };
 

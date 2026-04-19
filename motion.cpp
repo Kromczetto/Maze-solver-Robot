@@ -12,6 +12,7 @@
 RobotState currentState = FORWARD;
 
 bool turnAroundLeftDirection = true;
+#define POST_TURN_FORWARD_TICKS 300
 
 void updateMotion() {
 
@@ -27,7 +28,7 @@ void updateMotion() {
 
             driveForward(true);
 
-            if (avgTicks >= TICKS_PER_CELL) {
+            if (avgTicks >= TICKS_PER_CELL || front < 7) {
 
                 stopMotors();
 
@@ -73,7 +74,7 @@ void updateMotion() {
                 stopMotors();
                 updateDirection(-1);
                 resetEncoders();
-                currentState = FORWARD;
+                currentState = POST_TURN_FORWARD;
             }
 
             break;
@@ -89,7 +90,7 @@ void updateMotion() {
                 stopMotors();
                 updateDirection(1);
                 resetEncoders();
-                currentState = FORWARD;
+                currentState = POST_TURN_FORWARD;
             }
 
             break;
@@ -97,12 +98,18 @@ void updateMotion() {
 
         case TURNING_AROUND: {
 
+            driveForward(true);
+
+            if (front < 7) {
+                stopMotors();
+            }
+
             if (turnAroundLeftDirection) turnLeft();
             else turnRight();
 
             long ticks = (abs(getLeftTicks()) + abs(getRightTicks())) / 2;
 
-            if (ticks >= TURN_TICKS_LEFT * 2) {
+            if (ticks >= TURN_TICKS_LEFT * 2 + 50) {
                 stopMotors();
                 updateDirection(2);
                 resetEncoders();
@@ -112,6 +119,28 @@ void updateMotion() {
             break;
         }
 
+        case POST_TURN_FORWARD: {
+
+   
+            driveForward(true); 
+
+            long ticks = (abs(getLeftTicks()) + abs(getRightTicks())) / 2;
+
+            if (front < 7) {
+                stopMotors();
+                resetEncoders();
+                currentState = FORWARD;
+            }
+
+            if (ticks >= POST_TURN_FORWARD_TICKS) {
+                stopMotors();
+                resetEncoders();
+                currentState = FORWARD;
+            }
+
+            break;
+        }
+        
         case IDLE:
             stopMotors();
             break;
