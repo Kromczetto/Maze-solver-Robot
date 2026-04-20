@@ -47,7 +47,6 @@ void updateMotion() {
                 }
 
                 updateWalls(left, front, right);
-
                 RobotState decision = getNavigationDecision(left, front, right);
                 
                 //FOR DEBUG PURPOSE!
@@ -72,7 +71,7 @@ void updateMotion() {
                 }
 
                 return;
-            }
+            } 
 
             break;
         }

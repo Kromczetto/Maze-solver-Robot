@@ -24,16 +24,13 @@ struct Cell {
 };
 
 static const Point START = {6, 6};
-static const Point GOAL  = {7, 7};
+static const Point GOAL = {7, 7};
 
 void initMaze();
 void updateWalls(float left, float front, float right);
 void setWall(int x, int y, int dir);
 void updatePosition();
 void updateDirection(int turn);
-
-void floodFill(int goalX, int goalY);
-bool isGoal();
 
 int getRobotX();
 int getRobotY();

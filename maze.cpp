@@ -7,6 +7,9 @@ int robotX = MAZE_SIZE / 2;
 int robotY = MAZE_SIZE / 2;
 Direction robotDir = NORTH;
 
+#define WALL_DETECT 12.0
+#define WALL_CLEAR 15.0
+
 void initMaze() {
     for (int x = 0; x < MAZE_SIZE; x++) {
         for (int y = 0; y < MAZE_SIZE; y++) {
@@ -21,17 +24,21 @@ void initMaze() {
 
 void updateWalls(float left, float front, float right) {
 
-    if (front < WALL_THRESHOLD_CM)
-        setWall(robotX, robotY, robotDir);
+    bool wallFront = false;
+    bool wallLeft = false;
+    bool wallRight = false;
 
-    if (left < WALL_THRESHOLD_CM)
-        setWall(robotX, robotY, (robotDir + 3) % 4);
+    if (front < 16) wallFront = true;
+    if (left < 16) wallLeft = true;
+    if (right < 16) wallRight = true;
 
-    if (right < WALL_THRESHOLD_CM)
-        setWall(robotX, robotY, (robotDir + 1) % 4);
+    if (wallFront) setWall(robotX, robotY, robotDir);
+    if (wallLeft) setWall(robotX, robotY, (robotDir + 3) % 4);
+    if (wallRight) setWall(robotX, robotY, (robotDir + 1) % 4);
 
     maze[robotX][robotY].visited = true;
 }
+
 
 void setWall(int x, int y, int dir) {
 
@@ -65,47 +72,6 @@ void updateDirection(int turn) {
     if (turn == 1) robotDir = (Direction)((robotDir + 1) % 4);
     if (turn == -1) robotDir = (Direction)((robotDir + 3) % 4);
     if (turn == 2) robotDir = (Direction)((robotDir + 2) % 4);
-}
-
-void floodFill(int goalX, int goalY) {
-
-    for (int x = 0; x < MAZE_SIZE; x++)
-        for (int y = 0; y < MAZE_SIZE; y++)
-            maze[x][y].value = 255;
-
-    maze[goalX][goalY].value = 0;
-
-    bool changed = true;
-
-    while (changed) {
-        changed = false;
-
-        for (int x = 0; x < MAZE_SIZE; x++) {
-            for (int y = 0; y < MAZE_SIZE; y++) {
-
-                for (int d = 0; d < 4; d++) {
-
-                    if (maze[x][y].walls[d]) continue;
-
-                    int nx = x;
-                    int ny = y;
-
-                    if (d == NORTH) ny++;
-                    if (d == EAST)  nx++;
-                    if (d == SOUTH) ny--;
-                    if (d == WEST)  nx--;
-
-                    if (nx < 0 || ny < 0 || nx >= MAZE_SIZE || ny >= MAZE_SIZE)
-                        continue;
-
-                    if (maze[nx][ny].value + 1 < maze[x][y].value) {
-                        maze[x][y].value = maze[nx][ny].value + 1;
-                        changed = true;
-                    }
-                }
-            }
-        }
-    }
 }
 
 int getRobotX() { return robotX; }
