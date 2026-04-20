@@ -124,3 +124,7 @@ uint8_t getCellValue(int x, int y) {
 bool hasWall(int x, int y, int d) {
     return maze[x][y].walls[d];
 }
+
+bool isAtGoal() {
+    return (getRobotX() == GOAL.x && getRobotY() == GOAL.y);
+}

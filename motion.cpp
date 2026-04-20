@@ -16,6 +16,12 @@ bool turnAroundLeftDirection = true;
 
 void updateMotion() {
 
+    if (isAtGoal()) {
+        stopMotors();
+        currentState = IDLE;
+        return;
+    }
+
     float left = getLeftFiltered();
     float right = getRightFiltered();
     float front = getFrontFiltered();
@@ -33,6 +39,13 @@ void updateMotion() {
                 stopMotors();
 
                 updatePosition();
+
+                if (isAtGoal()) {
+                    stopMotors();
+                    currentState = IDLE;
+                    return;
+                }
+
                 updateWalls(left, front, right);
 
                 RobotState decision = getNavigationDecision(left, front, right);
@@ -109,7 +122,7 @@ void updateMotion() {
 
             long ticks = (abs(getLeftTicks()) + abs(getRightTicks())) / 2;
 
-            if (ticks >= TURN_TICKS_LEFT * 2 + 100) {
+            if (ticks >= TURN_TICKS_LEFT * 2 + 50) {
                 stopMotors();
                 updateDirection(2);
                 resetEncoders();

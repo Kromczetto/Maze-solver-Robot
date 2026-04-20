@@ -12,11 +12,19 @@ enum Direction {
     WEST
 };
 
+struct Point {
+    int x;
+    int y;
+};
+
 struct Cell {
     bool walls[4];
     uint8_t value;
     bool visited;
 };
+
+static const Point START = {6, 6};
+static const Point GOAL  = {7, 7};
 
 void initMaze();
 void updateWalls(float left, float front, float right);
@@ -29,6 +37,7 @@ bool isGoal();
 
 int getRobotX();
 int getRobotY();
+bool isAtGoal();
 Direction getRobotDir();
 
 uint8_t getCellValue(int x, int y);
