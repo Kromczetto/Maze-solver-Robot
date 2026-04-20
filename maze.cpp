@@ -108,11 +108,6 @@ void floodFill(int goalX, int goalY) {
     }
 }
 
-bool isGoal() {
-    return (robotX == 7 || robotX == 8) &&
-           (robotY == 7 || robotY == 8);
-}
-
 int getRobotX() { return robotX; }
 int getRobotY() { return robotY; }
 Direction getRobotDir() { return robotDir; }
