@@ -12,13 +12,50 @@
 RobotState currentState = FORWARD;
 
 bool turnAroundLeftDirection = true;
-#define POST_TURN_FORWARD_TICKS 275
+static bool needFloodFill = false;
 
 void updateMotion() {
 
     if (isAtGoal()) {
         stopMotors();
         currentState = IDLE;
+        return;
+    }
+
+    if (needFloodFill) {
+
+        floodFillStep();
+
+        if (!isFloodFillDone()) {
+            return;
+        }
+
+        needFloodFill = false;
+
+        float left = getLeftFiltered();
+        float right = getRightFiltered();
+        float front = getFrontFiltered();
+
+        RobotState decision = getNavigationDecision(left, front, right);
+
+        if (decision == TURNING_LEFT) {
+            resetEncoders();
+            currentState = TURNING_LEFT;
+        }
+        else if (decision == TURNING_RIGHT) {
+            resetEncoders();
+            currentState = TURNING_RIGHT;
+        }
+        else if (decision == TURNING_AROUND) {
+            turnAroundLeftDirection = (left > right);
+            resetEncoders();
+            currentState = TURNING_AROUND;
+        }
+        else {
+            resetEncoders();
+            currentState = FORWARD;
+        }
+
         return;
     }
 
@@ -47,31 +84,12 @@ void updateMotion() {
                 }
 
                 updateWalls(left, front, right);
-                RobotState decision = getNavigationDecision(left, front, right);
-                
-                //FOR DEBUG PURPOSE!
-                stopMotors();
-                delay(500);
 
-                if (decision == TURNING_LEFT) {
-                    resetEncoders();
-                    currentState = TURNING_LEFT;
-                }
-                else if (decision == TURNING_RIGHT) {
-                    resetEncoders();
-                    currentState = TURNING_RIGHT;
-                }
-                else if (decision == TURNING_AROUND) {
-                    turnAroundLeftDirection = (left > right);
-                    resetEncoders();
-                    currentState = TURNING_AROUND;
-                }
-                else {
-                    resetEncoders();
-                }
+                floodFillStart();
+                needFloodFill = true;
 
                 return;
-            } 
+            }
 
             break;
         }
@@ -133,8 +151,7 @@ void updateMotion() {
 
         case POST_TURN_FORWARD: {
 
-   
-            driveForward(true); 
+            driveForward(true);
 
             long ticks = (abs(getLeftTicks()) + abs(getRightTicks())) / 2;
 
@@ -152,7 +169,7 @@ void updateMotion() {
 
             break;
         }
-        
+
         case IDLE:
             stopMotors();
             break;

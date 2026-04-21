@@ -7,8 +7,15 @@ int robotX = MAZE_SIZE / 2;
 int robotY = MAZE_SIZE / 2;
 Direction robotDir = NORTH;
 
-#define WALL_DETECT 12.0
-#define WALL_CLEAR 15.0
+struct Node {
+    uint8_t x;
+    uint8_t y;
+};
+
+static Node queue[MAZE_SIZE * MAZE_SIZE];
+static int head = 0;
+static int tail = 0;
+static bool floodRunning = false;
 
 void initMaze() {
     for (int x = 0; x < MAZE_SIZE; x++) {
@@ -17,28 +24,92 @@ void initMaze() {
                 maze[x][y].walls[d] = false;
 
             maze[x][y].value = 255;
-            maze[x][y].visited = false;
         }
     }
 }
 
-void updateWalls(float left, float front, float right) {
+void floodFillStart() {
 
-    bool wallFront = false;
-    bool wallLeft = false;
-    bool wallRight = false;
+    for (int x = 0; x < MAZE_SIZE; x++) {
+        for (int y = 0; y < MAZE_SIZE; y++) {
+            maze[x][y].value = 255;
+        }
+    }
 
-    if (front < 16) wallFront = true;
-    if (left < 16) wallLeft = true;
-    if (right < 16) wallRight = true;
+    head = 0;
+    tail = 0;
 
-    if (wallFront) setWall(robotX, robotY, robotDir);
-    if (wallLeft) setWall(robotX, robotY, (robotDir + 3) % 4);
-    if (wallRight) setWall(robotX, robotY, (robotDir + 1) % 4);
+    maze[GOAL.x][GOAL.y].value = 0;
+    queue[tail++] = {GOAL.x, GOAL.y};
 
-    maze[robotX][robotY].visited = true;
+    floodRunning = true;
 }
 
+void floodFillStep() {
+
+    if (!floodRunning) return;
+
+    int steps = 4;
+
+    while (steps-- && head < tail) {
+
+        Node current = queue[head++];
+
+        int x = current.x;
+        int y = current.y;
+
+        int baseVal = maze[x][y].value;
+
+        for (int d = 0; d < 4; d++) {
+
+            if (hasWall(x, y, d)) continue;
+
+            int nx = x;
+            int ny = y;
+
+            if (d == NORTH) ny++;
+            if (d == EAST)  nx++;
+            if (d == SOUTH) ny--;
+            if (d == WEST)  nx--;
+
+            if (nx < 0 || ny < 0 || nx >= MAZE_SIZE || ny >= MAZE_SIZE)
+                continue;
+
+            if (maze[nx][ny].value > baseVal + 1) {
+
+                maze[nx][ny].value = baseVal + 1;
+
+                if (tail < MAZE_SIZE * MAZE_SIZE) {
+                    queue[tail++] = {nx, ny};
+                }
+            }
+        }
+
+        if (tail >= MAZE_SIZE * MAZE_SIZE) {
+            floodRunning = false;
+            return;
+        }
+    }
+
+    if (head >= tail) {
+        floodRunning = false;
+    }
+}
+
+bool isFloodFillDone() {
+    return !floodRunning;
+}
+
+void updateWalls(float left, float front, float right) {
+
+    bool wallFront = (front < 16);
+    bool wallLeft  = (left  < 16);
+    bool wallRight = (right < 16);
+
+    if (wallFront) setWall(robotX, robotY, robotDir);
+    if (wallLeft)  setWall(robotX, robotY, (robotDir + 3) % 4);
+    if (wallRight) setWall(robotX, robotY, (robotDir + 1) % 4);
+}
 
 void setWall(int x, int y, int dir) {
 
@@ -55,7 +126,7 @@ void setWall(int x, int y, int dir) {
     if (nx < 0 || ny < 0 || nx >= MAZE_SIZE || ny >= MAZE_SIZE)
         return;
 
-    maze[nx][ny].walls[(dir + 2) % 4] = true; 
+    maze[nx][ny].walls[(dir + 2) % 4] = true;
 }
 
 void updatePosition() {
@@ -69,9 +140,9 @@ void updatePosition() {
 }
 
 void updateDirection(int turn) {
-    if (turn == 1) robotDir = (Direction)((robotDir + 1) % 4);
+    if (turn == 1)  robotDir = (Direction)((robotDir + 1) % 4);
     if (turn == -1) robotDir = (Direction)((robotDir + 3) % 4);
-    if (turn == 2) robotDir = (Direction)((robotDir + 2) % 4);
+    if (turn == 2)  robotDir = (Direction)((robotDir + 2) % 4);
 }
 
 int getRobotX() { return robotX; }
@@ -87,5 +158,5 @@ bool hasWall(int x, int y, int d) {
 }
 
 bool isAtGoal() {
-    return (getRobotX() == GOAL.x && getRobotY() == GOAL.y);
+    return (robotX == GOAL.x && robotY == GOAL.y);
 }
