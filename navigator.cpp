@@ -17,6 +17,10 @@ RobotState decideFloodFill(float left, float front, float right) {
 
     for (int d = 0; d < 4; d++) {
 
+        if (d == dir && front < 10) continue;
+        if ((d - dir + 4) % 4 == 3 && left < 10) continue;
+        if ((d - dir + 4) % 4 == 1 && right < 10) continue;
+
         if (hasWall(x, y, d)) continue;
 
         int nx = x;

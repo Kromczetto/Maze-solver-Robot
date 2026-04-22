@@ -42,6 +42,8 @@ void sendTelemetry() {
     if (hasWall(getRobotX(), getRobotY(), 2)) walls |= 1 << 2;
     if (hasWall(getRobotX(), getRobotY(), 3)) walls |= 1 << 3;
 
+    uint8_t value = getCellValue(getRobotX(), getRobotY());
+
     SUART.print(front);
     SUART.print(",");
     SUART.print(left);
@@ -58,7 +60,9 @@ void sendTelemetry() {
     SUART.print(",");
     SUART.print((int)getRobotDir());
     SUART.print(",");
-    SUART.println(walls); 
+    SUART.print(walls);
+    SUART.print(",");
+    SUART.println(value); 
 }
 
 void setup() {
