@@ -2,12 +2,13 @@
 #define MOTION_H
 
 enum RobotState {
+    IDLE,
+    DECIDE,
     FORWARD,
     TURNING_LEFT,
     TURNING_RIGHT,
     TURNING_AROUND,
-    POST_TURN_FORWARD,
-    IDLE
+    POST_TURN_FORWARD
 };
 
 enum NavigationAlgorithm {
@@ -19,5 +20,6 @@ extern NavigationAlgorithm currentAlgorithm;
 
 RobotState getRobotState();
 void updateMotion();
+void startDecision(); 
 
 #endif

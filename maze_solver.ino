@@ -70,6 +70,21 @@ void setup() {
     initEncoders();
     initMaze();
 
+    stopMotors();
+    delay(2000);
+
+    for (int i = 0; i < 20; i++) {
+        updateTOF();
+        delay(20);
+    }
+
+    float left = getLeftFiltered();
+    float right = getRightFiltered();
+    float front = getFrontFiltered();
+
+    updateWalls(left, front, right);
+
+    startDecision();
 }
 
 void loop() {

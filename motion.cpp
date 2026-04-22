@@ -9,55 +9,15 @@
 #include "motors.h"
 #include "maze.h"
 
-RobotState currentState = FORWARD;
+RobotState currentState = IDLE;
 
 bool turnAroundLeftDirection = true;
-static bool needFloodFill = false;
+
+void startDecision() {
+    currentState = DECIDE;
+}
 
 void updateMotion() {
-
-    if (isAtGoal()) {
-        stopMotors();
-        currentState = IDLE;
-        return;
-    }
-
-    if (needFloodFill) {
-
-        floodFillStep();
-
-        if (!isFloodFillDone()) {
-            return;
-        }
-
-        needFloodFill = false;
-
-        float left = getLeftFiltered();
-        float right = getRightFiltered();
-        float front = getFrontFiltered();
-
-        RobotState decision = getNavigationDecision(left, front, right);
-
-        if (decision == TURNING_LEFT) {
-            resetEncoders();
-            currentState = TURNING_LEFT;
-        }
-        else if (decision == TURNING_RIGHT) {
-            resetEncoders();
-            currentState = TURNING_RIGHT;
-        }
-        else if (decision == TURNING_AROUND) {
-            turnAroundLeftDirection = (left > right);
-            resetEncoders();
-            currentState = TURNING_AROUND;
-        }
-        else {
-            resetEncoders();
-            currentState = FORWARD;
-        }
-
-        return;
-    }
 
     float left = getLeftFiltered();
     float right = getRightFiltered();
@@ -66,6 +26,37 @@ void updateMotion() {
     long avgTicks = (abs(getLeftTicks()) + abs(getRightTicks())) / 2;
 
     switch (currentState) {
+        case DECIDE: {
+
+            updateWalls(left, front, right);
+
+            floodFillStart();
+            while (!isFloodFillDone()) {
+                floodFillStep();
+            }
+
+            RobotState decision = getNavigationDecision(left, front, right);
+
+            if (decision == TURNING_LEFT) {
+                resetEncoders();
+                currentState = TURNING_LEFT;
+            }
+            else if (decision == TURNING_RIGHT) {
+                resetEncoders();
+                currentState = TURNING_RIGHT;
+            }
+            else if (decision == TURNING_AROUND) {
+                turnAroundLeftDirection = (left > right);
+                resetEncoders();
+                currentState = TURNING_AROUND;
+            }
+            else {
+                resetEncoders();
+                currentState = FORWARD;
+            }
+
+            return;
+        }
 
         case FORWARD: {
 
@@ -78,16 +69,12 @@ void updateMotion() {
                 updatePosition();
 
                 if (isAtGoal()) {
-                    stopMotors();
                     currentState = IDLE;
                     return;
                 }
 
-                updateWalls(left, front, right);
-
-                floodFillStart();
-                needFloodFill = true;
-
+                resetEncoders();
+                currentState = DECIDE;  
                 return;
             }
 
@@ -128,18 +115,12 @@ void updateMotion() {
 
         case TURNING_AROUND: {
 
-            driveForward(true);
-
-            if (front < 7) {
-                stopMotors();
-            }
-
             if (turnAroundLeftDirection) turnLeft();
             else turnRight();
 
             long ticks = (abs(getLeftTicks()) + abs(getRightTicks())) / 2;
 
-            if (ticks >= TURN_TICKS_LEFT * 2 + 50) {
+            if (ticks >= TURN_TICKS_LEFT * 2) {
                 stopMotors();
                 updateDirection(2);
                 resetEncoders();
@@ -154,12 +135,6 @@ void updateMotion() {
             driveForward(true);
 
             long ticks = (abs(getLeftTicks()) + abs(getRightTicks())) / 2;
-
-            if (front < 7) {
-                stopMotors();
-                resetEncoders();
-                currentState = FORWARD;
-            }
 
             if (ticks >= POST_TURN_FORWARD_TICKS) {
                 stopMotors();
