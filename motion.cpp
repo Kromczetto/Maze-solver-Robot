@@ -22,6 +22,7 @@ void updateMotion() {
     float left = getLeftFiltered();
     float right = getRightFiltered();
     float front = getFrontFiltered();
+    // updateWalls(left, front, right);
 
     long avgTicks = (abs(getLeftTicks()) + abs(getRightTicks())) / 2;
 
@@ -30,9 +31,16 @@ void updateMotion() {
 
             updateWalls(left, front, right);
 
-            floodFillStart();
-            while (!isFloodFillDone()) {
-                floodFillStep();
+            int x = getRobotX();
+            int y = getRobotY();
+
+            if (!isCellConsistent(x, y)) {
+
+                floodFillStart();
+
+                while (!isFloodFillDone()) {
+                    floodFillStep();
+                }
             }
 
             RobotState decision = getNavigationDecision(left, front, right);

@@ -13,13 +13,9 @@ RobotState decideFloodFill(float left, float front, float right) {
     Direction dir = getRobotDir();
 
     int bestDir = dir;
-    int bestScore = 10000;
+    int bestVal = 255;
 
     for (int d = 0; d < 4; d++) {
-
-        if (d == dir && front < 10) continue;
-        if ((d - dir + 4) % 4 == 3 && left < 10) continue;
-        if ((d - dir + 4) % 4 == 1 && right < 10) continue;
 
         if (hasWall(x, y, d)) continue;
 
@@ -36,22 +32,17 @@ RobotState decideFloodFill(float left, float front, float right) {
 
         int val = getCellValue(nx, ny);
 
-        int score = val * 10;
-
-        if (d == dir) score -= 2;             
-        if ((d - dir + 4) % 4 == 3) score -= 1;
-
-        if (score < bestScore) {
-            bestScore = score;
+        if (val < bestVal) {
+            bestVal = val;
             bestDir = d;
         }
     }
 
     int diff = (bestDir - dir + 4) % 4;
 
-    if (diff == 0) return FORWARD;
-    if (diff == 1) return TURNING_RIGHT;
-    if (diff == 3) return TURNING_LEFT;
+    if (diff == 0 && front > OPEN_THRESHOLD_STRONG) return FORWARD;
+    if (diff == 1 && right >OPEN_THRESHOLD_STRONG) return TURNING_RIGHT;
+    if (diff == 3 && left > OPEN_THRESHOLD_STRONG) return TURNING_LEFT;
 
     return TURNING_AROUND;
 }

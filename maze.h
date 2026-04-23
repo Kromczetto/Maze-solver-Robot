@@ -20,14 +20,15 @@ struct Cell {
     uint8_t value;
 };
 
-static const Point START = {5, 5};
-static const Point GOAL = {6, 6};
+static const Point START = {0, 0};
+static const Point GOAL = {2, 2};
 
 void initMaze();
 void updateWalls(float left, float front, float right);
 void setWall(int x, int y, int dir);
 void updatePosition();
 void updateDirection(int turn);
+bool isCellConsistent(int x, int y);
 
 int getRobotX();
 int getRobotY();

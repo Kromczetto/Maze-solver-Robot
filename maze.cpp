@@ -3,8 +3,8 @@
 
 Cell maze[MAZE_SIZE][MAZE_SIZE];
 
-int robotX = MAZE_SIZE / 2;
-int robotY = MAZE_SIZE / 2;
+int robotX = START.x;
+int robotY = START.y;
 Direction robotDir = NORTH;
 
 struct Node {
@@ -159,4 +159,34 @@ bool hasWall(int x, int y, int d) {
 
 bool isAtGoal() {
     return (robotX == GOAL.x && robotY == GOAL.y);
+}
+
+bool isCellConsistent(int x, int y) {
+
+    int current = maze[x][y].value;
+    int minNeighbor = 255;
+
+    for (int d = 0; d < 4; d++) {
+
+        if (hasWall(x, y, d)) continue;
+
+        int nx = x;
+        int ny = y;
+
+        if (d == NORTH) ny++;
+        if (d == EAST)  nx++;
+        if (d == SOUTH) ny--;
+        if (d == WEST)  nx--;
+
+        if (nx < 0 || ny < 0 || nx >= MAZE_SIZE || ny >= MAZE_SIZE)
+            continue;
+
+        int val = maze[nx][ny].value;
+
+        if (val < minNeighbor) {
+            minNeighbor = val;
+        }
+    }
+
+    return current == minNeighbor + 1;
 }
