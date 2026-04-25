@@ -31,7 +31,7 @@ void sendTelemetry() {
     int front = (int)getFrontFiltered();
     int left = (int)getLeftFiltered();
     int right = (int)getRightFiltered();
-    int angle = 0;
+    int mazeSize = MAZE_SIZE;
 
     const char* state = getStateString();
 
@@ -50,7 +50,7 @@ void sendTelemetry() {
     SUART.print(",");
     SUART.print(right);
     SUART.print(",");
-    SUART.print(angle);
+    SUART.print(mazeSize);
     SUART.print(",");
     SUART.print(state);
     SUART.print(",");
@@ -73,6 +73,8 @@ void setup() {
     initSensors();
     initEncoders();
     initMaze();
+
+    sendMazeDebugBT(SUART);
 
     stopMotors();
     delay(2000);

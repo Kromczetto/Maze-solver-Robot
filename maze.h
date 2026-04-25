@@ -3,17 +3,9 @@
 
 #include <Arduino.h>
 
-enum Direction {
-    NORTH = 0,
-    EAST,
-    SOUTH,
-    WEST
-};
+enum Direction { NORTH = 0, EAST, SOUTH, WEST };
 
-struct Point {
-    int x;
-    int y;
-};
+struct Point { int x; int y; };
 
 struct Cell {
     bool walls[4];
@@ -21,7 +13,7 @@ struct Cell {
 };
 
 static const Point START = {0, 0};
-static const Point GOAL = {2, 2};
+static const Point GOAL  = {2, 2};
 
 void initMaze();
 void updateWalls(float left, float front, float right);
@@ -41,5 +33,7 @@ bool hasWall(int x, int y, int d);
 void floodFillStart();
 void floodFillStep();
 bool isFloodFillDone();
+
+void sendMazeDebugBT(Stream& bt);
 
 #endif

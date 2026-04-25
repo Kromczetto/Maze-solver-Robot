@@ -7,10 +7,7 @@ int robotX = START.x;
 int robotY = START.y;
 Direction robotDir = NORTH;
 
-struct Node {
-    uint8_t x;
-    uint8_t y;
-};
+struct Node { uint8_t x, y; };
 
 static Node queue[MAZE_SIZE * MAZE_SIZE];
 static int head = 0;
@@ -20,15 +17,26 @@ static bool floodRunning = false;
 void initMaze() {
     for (int x = 0; x < MAZE_SIZE; x++) {
         for (int y = 0; y < MAZE_SIZE; y++) {
-            for (int d = 0; d < 4; d++)
-                maze[x][y].walls[d] = false;
-
+            for (int d = 0; d < 4; d++) maze[x][y].walls[d] = false;
             maze[x][y].value = 255;
+        }
+    }
+
+    for (int x = 0; x < MAZE_SIZE; x++) {
+        for (int y = 0; y < MAZE_SIZE; y++) {
+
+            if (y == MAZE_SIZE - 1) maze[x][y].walls[NORTH] = true;
+            if (x == MAZE_SIZE - 1) maze[x][y].walls[EAST]  = true;
+            if (y == 0)             maze[x][y].walls[SOUTH] = true;
+            if (x == 0)             maze[x][y].walls[WEST]  = true;
         }
     }
 }
 
 void floodFillStart() {
+
+    head = 0;
+    tail = 0;
 
     for (int x = 0; x < MAZE_SIZE; x++) {
         for (int y = 0; y < MAZE_SIZE; y++) {
@@ -36,11 +44,8 @@ void floodFillStart() {
         }
     }
 
-    head = 0;
-    tail = 0;
-
     maze[GOAL.x][GOAL.y].value = 0;
-    queue[tail++] = {GOAL.x, GOAL.y};
+    queue[tail++] = { (uint8_t)GOAL.x, (uint8_t)GOAL.y };
 
     floodRunning = true;
 }
@@ -49,23 +54,19 @@ void floodFillStep() {
 
     if (!floodRunning) return;
 
-    int steps = 4;
+    while (head < tail) {
 
-    while (steps-- && head < tail) {
+        Node n = queue[head++];
+        int x = n.x;
+        int y = n.y;
 
-        Node current = queue[head++];
-
-        int x = current.x;
-        int y = current.y;
-
-        int baseVal = maze[x][y].value;
+        int base = maze[x][y].value;
 
         for (int d = 0; d < 4; d++) {
 
             if (hasWall(x, y, d)) continue;
 
-            int nx = x;
-            int ny = y;
+            int nx = x, ny = y;
 
             if (d == NORTH) ny++;
             if (d == EAST)  nx++;
@@ -75,30 +76,19 @@ void floodFillStep() {
             if (nx < 0 || ny < 0 || nx >= MAZE_SIZE || ny >= MAZE_SIZE)
                 continue;
 
-            if (maze[nx][ny].value > baseVal + 1) {
+            int newVal = base + 1;
 
-                maze[nx][ny].value = baseVal + 1;
-
-                if (tail < MAZE_SIZE * MAZE_SIZE) {
-                    queue[tail++] = {nx, ny};
-                }
+            if (maze[nx][ny].value > newVal) {
+                maze[nx][ny].value = newVal;
+                queue[tail++] = {nx, ny};
             }
         }
-
-        if (tail >= MAZE_SIZE * MAZE_SIZE) {
-            floodRunning = false;
-            return;
-        }
     }
 
-    if (head >= tail) {
-        floodRunning = false;
-    }
+    floodRunning = false;
 }
 
-bool isFloodFillDone() {
-    return !floodRunning;
-}
+bool isFloodFillDone() { return !floodRunning; }
 
 void updateWalls(float left, float front, float right) {
 
@@ -115,9 +105,7 @@ void setWall(int x, int y, int dir) {
 
     maze[x][y].walls[dir] = true;
 
-    int nx = x;
-    int ny = y;
-
+    int nx = x, ny = y;
     if (dir == NORTH) ny++;
     if (dir == EAST)  nx++;
     if (dir == SOUTH) ny--;
@@ -149,13 +137,8 @@ int getRobotX() { return robotX; }
 int getRobotY() { return robotY; }
 Direction getRobotDir() { return robotDir; }
 
-uint8_t getCellValue(int x, int y) {
-    return maze[x][y].value;
-}
-
-bool hasWall(int x, int y, int d) {
-    return maze[x][y].walls[d];
-}
+uint8_t getCellValue(int x, int y) { return maze[x][y].value; }
+bool hasWall(int x, int y, int d) { return maze[x][y].walls[d]; }
 
 bool isAtGoal() {
     return (robotX == GOAL.x && robotY == GOAL.y);
@@ -164,15 +147,13 @@ bool isAtGoal() {
 bool isCellConsistent(int x, int y) {
 
     int current = maze[x][y].value;
-    int minNeighbor = 255;
+    int minN = 255;
 
     for (int d = 0; d < 4; d++) {
 
         if (hasWall(x, y, d)) continue;
 
-        int nx = x;
-        int ny = y;
-
+        int nx = x, ny = y;
         if (d == NORTH) ny++;
         if (d == EAST)  nx++;
         if (d == SOUTH) ny--;
@@ -181,12 +162,24 @@ bool isCellConsistent(int x, int y) {
         if (nx < 0 || ny < 0 || nx >= MAZE_SIZE || ny >= MAZE_SIZE)
             continue;
 
-        int val = maze[nx][ny].value;
-
-        if (val < minNeighbor) {
-            minNeighbor = val;
-        }
+        minN = min(minN, (int)maze[nx][ny].value);
     }
 
-    return current == minNeighbor + 1;
+    if (minN == 255) return true;
+    return current == minN + 1;
+}
+
+void sendMazeDebugBT(Stream& bt) {
+
+    bt.println("MAZE_START");
+
+    for (int y = 0; y < MAZE_SIZE; y++) {
+        for (int x = 0; x < MAZE_SIZE; x++) {
+            bt.print(maze[x][y].value);
+            bt.print(",");
+        }
+        bt.println();
+    }
+
+    bt.println("MAZE_END");
 }

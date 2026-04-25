@@ -9,9 +9,14 @@
 #include "motors.h"
 #include "maze.h"
 
+extern SoftwareSerial SUART;
+
 RobotState currentState = IDLE;
 
 bool turnAroundLeftDirection = true;
+
+unsigned long debugPauseStart = 0;
+const unsigned long DEBUG_PAUSE_TIME = 5000;
 
 void startDecision() {
     currentState = DECIDE;
@@ -22,46 +27,55 @@ void updateMotion() {
     float left = getLeftFiltered();
     float right = getRightFiltered();
     float front = getFrontFiltered();
-    // updateWalls(left, front, right);
 
     long avgTicks = (abs(getLeftTicks()) + abs(getRightTicks())) / 2;
 
     switch (currentState) {
+
         case DECIDE: {
 
             updateWalls(left, front, right);
 
-            int x = getRobotX();
-            int y = getRobotY();
+            stopMotors();
 
-            if (!isCellConsistent(x, y)) {
+            SUART.print("RECALC,");
+            SUART.print(getRobotX());
+            SUART.print(",");
+            SUART.println(getRobotY());
 
-                floodFillStart();
+            floodFillStart();
 
-                while (!isFloodFillDone()) {
-                    floodFillStep();
-                }
+            debugPauseStart = millis();
+            currentState = DEBUG_PAUSE;
+            return;
+        }
+
+        case DEBUG_PAUSE: {
+
+            stopMotors();
+
+            if (millis() - debugPauseStart >= DEBUG_PAUSE_TIME) {
+                currentState = WAIT_FOR_FLOOD;
             }
+            return;
+        }
+
+        case WAIT_FOR_FLOOD: {
+
+            while (!isFloodFillDone()) {
+                floodFillStep();
+            }
+
+            sendMazeDebugBT(SUART);
+
+            float left  = getLeftFiltered();
+            float right = getRightFiltered();
+            float front = getFrontFiltered();
 
             RobotState decision = getNavigationDecision(left, front, right);
 
-            if (decision == TURNING_LEFT) {
-                resetEncoders();
-                currentState = TURNING_LEFT;
-            }
-            else if (decision == TURNING_RIGHT) {
-                resetEncoders();
-                currentState = TURNING_RIGHT;
-            }
-            else if (decision == TURNING_AROUND) {
-                turnAroundLeftDirection = (left > right);
-                resetEncoders();
-                currentState = TURNING_AROUND;
-            }
-            else {
-                resetEncoders();
-                currentState = FORWARD;
-            }
+            resetEncoders();
+            currentState = decision;
 
             return;
         }
@@ -73,7 +87,6 @@ void updateMotion() {
             if (avgTicks >= TICKS_PER_CELL || front < 6) {
 
                 stopMotors();
-
                 updatePosition();
 
                 if (isAtGoal()) {
@@ -82,7 +95,7 @@ void updateMotion() {
                 }
 
                 resetEncoders();
-                currentState = DECIDE;  
+                currentState = DECIDE;
                 return;
             }
 
