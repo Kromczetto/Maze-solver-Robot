@@ -17,7 +17,11 @@ static bool floodRunning = false;
 void initMaze() {
     for (int x = 0; x < MAZE_SIZE; x++) {
         for (int y = 0; y < MAZE_SIZE; y++) {
-            for (int d = 0; d < 4; d++) maze[x][y].walls[d] = false;
+            for (int d = 0; d < 4; d++) {
+                maze[x][y].walls[d] = false;
+                maze[x][y].visits[d] = 0;
+            }
+
             maze[x][y].value = 255;
         }
     }
@@ -26,9 +30,9 @@ void initMaze() {
         for (int y = 0; y < MAZE_SIZE; y++) {
 
             if (y == MAZE_SIZE - 1) maze[x][y].walls[NORTH] = true;
-            if (x == MAZE_SIZE - 1) maze[x][y].walls[EAST]  = true;
-            if (y == 0)             maze[x][y].walls[SOUTH] = true;
-            if (x == 0)             maze[x][y].walls[WEST]  = true;
+            if (x == MAZE_SIZE - 1) maze[x][y].walls[EAST] = true;
+            if (y == 0) maze[x][y].walls[SOUTH] = true;
+            if (x == 0) maze[x][y].walls[WEST] = true;
         }
     }
 }
@@ -69,9 +73,9 @@ void floodFillStep() {
             int nx = x, ny = y;
 
             if (d == NORTH) ny++;
-            if (d == EAST)  nx++;
+            if (d == EAST) nx++;
             if (d == SOUTH) ny--;
-            if (d == WEST)  nx--;
+            if (d == WEST) nx--;
 
             if (nx < 0 || ny < 0 || nx >= MAZE_SIZE || ny >= MAZE_SIZE)
                 continue;
@@ -93,11 +97,11 @@ bool isFloodFillDone() { return !floodRunning; }
 void updateWalls(float left, float front, float right) {
 
     bool wallFront = (front < 16);
-    bool wallLeft  = (left  < 16);
+    bool wallLeft = (left < 16);
     bool wallRight = (right < 16);
 
     if (wallFront) setWall(robotX, robotY, robotDir);
-    if (wallLeft)  setWall(robotX, robotY, (robotDir + 3) % 4);
+    if (wallLeft) setWall(robotX, robotY, (robotDir + 3) % 4);
     if (wallRight) setWall(robotX, robotY, (robotDir + 1) % 4);
 }
 
@@ -107,9 +111,9 @@ void setWall(int x, int y, int dir) {
 
     int nx = x, ny = y;
     if (dir == NORTH) ny++;
-    if (dir == EAST)  nx++;
+    if (dir == EAST) nx++;
     if (dir == SOUTH) ny--;
-    if (dir == WEST)  nx--;
+    if (dir == WEST) nx--;
 
     if (nx < 0 || ny < 0 || nx >= MAZE_SIZE || ny >= MAZE_SIZE)
         return;
@@ -119,18 +123,18 @@ void setWall(int x, int y, int dir) {
 
 void updatePosition() {
     if (robotDir == NORTH) robotY++;
-    if (robotDir == EAST)  robotX++;
+    if (robotDir == EAST) robotX++;
     if (robotDir == SOUTH) robotY--;
-    if (robotDir == WEST)  robotX--;
+    if (robotDir == WEST) robotX--;
 
     robotX = constrain(robotX, 0, MAZE_SIZE - 1);
     robotY = constrain(robotY, 0, MAZE_SIZE - 1);
 }
 
 void updateDirection(int turn) {
-    if (turn == 1)  robotDir = (Direction)((robotDir + 1) % 4);
+    if (turn == 1) robotDir = (Direction)((robotDir + 1) % 4);
     if (turn == -1) robotDir = (Direction)((robotDir + 3) % 4);
-    if (turn == 2)  robotDir = (Direction)((robotDir + 2) % 4);
+    if (turn == 2) robotDir = (Direction)((robotDir + 2) % 4);
 }
 
 int getRobotX() { return robotX; }
@@ -155,9 +159,9 @@ bool isCellConsistent(int x, int y) {
 
         int nx = x, ny = y;
         if (d == NORTH) ny++;
-        if (d == EAST)  nx++;
+        if (d == EAST) nx++;
         if (d == SOUTH) ny--;
-        if (d == WEST)  nx--;
+        if (d == WEST) nx--;
 
         if (nx < 0 || ny < 0 || nx >= MAZE_SIZE || ny >= MAZE_SIZE)
             continue;
@@ -182,4 +186,39 @@ void sendMazeDebugBT(Stream& bt) {
     }
 
     bt.println("MAZE_END");
+}
+
+uint8_t getVisit(int x, int y, int d) {
+    return maze[x][y].visits[d];
+}
+
+void addVisit(int x, int y, int d) {
+
+    if (maze[x][y].visits[d] < 2)
+        maze[x][y].visits[d]++;
+
+    int nx = x, ny = y;
+
+    if (d == NORTH) ny++;
+    if (d == EAST) nx++;
+    if (d == SOUTH) ny--;
+    if (d == WEST) nx--;
+
+    if (nx < 0 || ny < 0 || nx >= MAZE_SIZE || ny >= MAZE_SIZE)
+        return;
+
+    if (maze[nx][ny].visits[(d + 2) % 4] < 2)
+        maze[nx][ny].visits[(d + 2) % 4]++;
+}
+
+uint8_t getCellVisit(int x, int y) {
+
+    uint8_t maxV = 0;
+
+    for (int d = 0; d < 4; d++) {
+        if (maze[x][y].visits[d] > maxV)
+            maxV = maze[x][y].visits[d];
+    }
+
+    return maxV;
 }

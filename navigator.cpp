@@ -3,8 +3,69 @@
 #include "maze.h"
 #include "robot_config.h"
 
-NavigationAlgorithm currentAlgorithm = FLOOD_FILL;
+// NavigationAlgorithm currentAlgorithm = FLOOD_FILL;
 // NavigationAlgorithm currentAlgorithm = LEFT_HAND;
+NavigationAlgorithm currentAlgorithm = TREMAUX;
+
+RobotState decideTremaux(float left, float front, float right) {
+
+    int x = getRobotX();
+    int y = getRobotY();
+    Direction dir = getRobotDir();
+
+    int bestDir = -1;
+    int bestVisit = 3;
+    int bestPriority = 100;
+
+    for (int d = 0; d < 4; d++) {
+
+        if (hasWall(x, y, d)) continue;
+
+        int visit = getVisit(x, y, d);
+
+        if (visit >= 2) continue;
+
+        int diff = (d - dir + 4) % 4;
+
+        int priority;
+        if (diff == 3) priority = 0;
+        else if (diff == 0) priority = 1;
+        else if (diff == 1) priority = 2;
+        else priority = 3;
+
+        if (visit < bestVisit || (visit == bestVisit && priority < bestPriority)) {
+            bestVisit = visit;
+            bestDir = d;
+            bestPriority = priority;
+        }
+    }
+
+    if (bestDir == -1) {
+
+        for (int d = 0; d < 4; d++) {
+
+            if (hasWall(x, y, d)) continue;
+
+            int diff = (d - dir + 4) % 4;
+
+            if (diff == 3) return TURNING_LEFT;
+            if (diff == 0) return FORWARD;
+            if (diff == 1) return TURNING_RIGHT;
+        }
+
+        return TURNING_AROUND;
+    }
+
+    addVisit(x, y, bestDir);
+
+    int diff = (bestDir - dir + 4) % 4;
+
+    if (diff == 0) return FORWARD;
+    if (diff == 1) return TURNING_RIGHT;
+    if (diff == 3) return TURNING_LEFT;
+
+    return TURNING_AROUND;
+}
 
 RobotState decideFloodFill(float left, float front, float right) {
 
@@ -68,6 +129,9 @@ RobotState getNavigationDecision(float left, float front, float right) {
 
         case FLOOD_FILL:
             return decideFloodFill(left, front, right);
+
+        case TREMAUX:
+            return decideTremaux(left, front, right);
     }
 
     return IDLE;

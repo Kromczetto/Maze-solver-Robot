@@ -34,9 +34,11 @@ void updateMotion() {
 
         case DECIDE: {
 
-            updateWalls(left, front, right);
+        updateWalls(left, front, right);
 
-            stopMotors();
+        stopMotors();
+
+        if (currentAlgorithm == FLOOD_FILL) {
 
             SUART.print("RECALC,");
             SUART.print(getRobotX());
@@ -45,11 +47,22 @@ void updateMotion() {
 
             floodFillStart();
 
-            debugPauseStart = millis();
-            currentState = DEBUG_PAUSE;
+            currentState = WAIT_FOR_FLOOD;
             return;
         }
 
+        if (currentAlgorithm == TREMAUX) {
+
+            RobotState decision = getNavigationDecision(left, front, right);
+
+            resetEncoders();
+            currentState = decision;
+
+            return;
+        }
+
+        return;
+    }
         case DEBUG_PAUSE: {
 
             stopMotors();
@@ -62,15 +75,16 @@ void updateMotion() {
 
         case WAIT_FOR_FLOOD: {
 
+            if (currentAlgorithm != FLOOD_FILL) {
+                currentState = DECIDE;
+                return;
+            }
+
             while (!isFloodFillDone()) {
                 floodFillStep();
             }
 
             sendMazeDebugBT(SUART);
-
-            float left  = getLeftFiltered();
-            float right = getRightFiltered();
-            float front = getFrontFiltered();
 
             RobotState decision = getNavigationDecision(left, front, right);
 

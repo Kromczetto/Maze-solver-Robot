@@ -10,6 +10,7 @@ struct Point { int x; int y; };
 struct Cell {
     bool walls[4];
     uint8_t value;
+    uint8_t visits[4];
 };
 
 static const Point START = {0, 0};
@@ -35,5 +36,9 @@ void floodFillStep();
 bool isFloodFillDone();
 
 void sendMazeDebugBT(Stream& bt);
+
+uint8_t getVisit(int x, int y, int d);
+void addVisit(int x, int y, int d);
+uint8_t getCellVisit(int x, int y);
 
 #endif

@@ -7,6 +7,7 @@
 #include "encoders.h"
 #include "maze.h"
 #include "drive.h"
+#include "robot_config.h"
 
 SoftwareSerial SUART(A1, A2);
 
@@ -42,7 +43,15 @@ void sendTelemetry() {
     if (hasWall(getRobotX(), getRobotY(), 2)) walls |= 1 << 2;
     if (hasWall(getRobotX(), getRobotY(), 3)) walls |= 1 << 3;
 
-    uint8_t value = getCellValue(getRobotX(), getRobotY());
+    ///uint8_t value = getCellValue(getRobotX(), getRobotY());
+
+    uint8_t value;
+
+    if (currentAlgorithm == TREMAUX) {
+        value = getCellVisit(getRobotX(), getRobotY());
+    } else {
+        value = getCellValue(getRobotX(), getRobotY());
+    }
 
     SUART.print(front);
     SUART.print(",");
