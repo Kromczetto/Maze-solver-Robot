@@ -6,10 +6,17 @@
 // NavigationAlgorithm currentAlgorithm = FLOOD_FILL;
 // NavigationAlgorithm currentAlgorithm = LEFT_HAND;
 // NavigationAlgorithm currentAlgorithm = TREMAUX;
-NavigationAlgorithm currentAlgorithm = PLEDGE;
+// NavigationAlgorithm currentAlgorithm = DEAD_END_FILL;
+NavigationAlgorithm currentAlgorithm = GREEDY;
 
 static int pledgeTurnSum = 0;
 static Direction pledgeHeading = NORTH;
+static bool followingWall = false;
+
+void normalizeTurnSum() {
+    while (pledgeTurnSum > 180) pledgeTurnSum -= 360;
+    while (pledgeTurnSum < -180) pledgeTurnSum += 360;
+}
 
 RobotState decideTremaux(float left, float front, float right) {
 
@@ -122,49 +129,58 @@ RobotState decideFloodFill(float left, float front, float right) {
     return TURNING_AROUND;
 }
 
-RobotState decidePledge(float left, float front, float right) {
+RobotState decideGreedy(float left, float front, float right) {
 
     int x = getRobotX();
     int y = getRobotY();
     Direction dir = getRobotDir();
 
-    if (pledgeTurnSum == 0) {
+    int bestDir = -1;
+    int bestDist = 999;
+    int bestPriority = 100;
 
-        int d = pledgeHeading;
+    for (int d = 0; d < 4; d++) {
 
-        if (!hasWall(x, y, d)) {
+        if (hasWall(x, y, d)) continue;
 
-            int diff = (d - dir + 4) % 4;
+        int nx = x, ny = y;
 
-            if (diff == 0) return FORWARD;
-            if (diff == 1) return TURNING_RIGHT;
-            if (diff == 3) return TURNING_LEFT;
+        if (d == NORTH) ny++;
+        if (d == EAST)  nx++;
+        if (d == SOUTH) ny--;
+        if (d == WEST)  nx--;
 
-            return TURNING_AROUND;
+        if (nx < 0 || ny < 0 || nx >= MAZE_SIZE || ny >= MAZE_SIZE)
+            continue;
+
+        int dist = abs(nx - GOAL.x) + abs(ny - GOAL.y);
+
+        int diff = (d - dir + 4) % 4;
+
+        int priority;
+        if (diff == 3) priority = 0;
+        else if (diff == 0) priority = 1;
+        else if (diff == 1) priority = 2;
+        else priority = 3;
+
+        if (dist < bestDist || (dist == bestDist && priority < bestPriority)) {
+            bestDist = dist;
+            bestDir = d;
+            bestPriority = priority;
         }
     }
 
-    if (!hasWall(x, y, (dir + 1) % 4)) {
-        pledgeTurnSum += 90;
-        return TURNING_RIGHT;
+    if (bestDir == -1) {
+        return TURNING_AROUND;
     }
 
-    if (!hasWall(x, y, dir)) {
-        return FORWARD;
-    }
+    int diff = (bestDir - dir + 4) % 4;
 
-    if (!hasWall(x, y, (dir + 3) % 4)) {
-        pledgeTurnSum -= 90;
-        return TURNING_LEFT;
-    }
+    if (diff == 0) return FORWARD;
+    if (diff == 1) return TURNING_RIGHT;
+    if (diff == 3) return TURNING_LEFT;
 
-    pledgeTurnSum += 180;
     return TURNING_AROUND;
-}
-
-void setPledgeHeading(Direction dir) {
-    pledgeHeading = dir;
-    pledgeTurnSum = 0; /
 }
 
 RobotState getNavigationDecision(float left, float front, float right) {
@@ -182,8 +198,9 @@ RobotState getNavigationDecision(float left, float front, float right) {
         case TREMAUX:
             return decideTremaux(left, front, right);
 
-        case PLEDGE:
-            return decidePledge(left, front, right);
+        case GREEDY:
+            return decideGreedy(left, front, right);
+
     }
 
     return IDLE;

@@ -21,7 +21,7 @@ enum NavigationAlgorithm {
     LEFT_HAND,
     FLOOD_FILL,
     TREMAUX,
-    PLEDGE
+    GREEDY
 };
 
 extern NavigationAlgorithm currentAlgorithm;

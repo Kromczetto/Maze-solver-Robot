@@ -61,7 +61,7 @@ void updateMotion() {
             return;
         }
 
-        if (currentAlgorithm == PLEDGE) {
+        if (currentAlgorithm == GREEDY) {
 
             RobotState decision = getNavigationDecision(left, front, right);
 

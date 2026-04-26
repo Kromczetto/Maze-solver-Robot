@@ -101,7 +101,6 @@ void setup() {
     updateWalls(left, front, right);
 
     startDecision();
-    setPledgeHeading(getRobotDir());
 }
 
 void loop() {
