@@ -61,6 +61,16 @@ void updateMotion() {
             return;
         }
 
+        if (currentAlgorithm == PLEDGE) {
+
+            RobotState decision = getNavigationDecision(left, front, right);
+
+            resetEncoders();
+            currentState = decision;
+
+            return;
+        }
+
         return;
     }
         case DEBUG_PAUSE: {

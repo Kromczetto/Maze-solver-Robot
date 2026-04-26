@@ -8,6 +8,7 @@
 #include "maze.h"
 #include "drive.h"
 #include "robot_config.h"
+#include "navigator.h"
 
 SoftwareSerial SUART(A1, A2);
 
@@ -100,6 +101,7 @@ void setup() {
     updateWalls(left, front, right);
 
     startDecision();
+    setPledgeHeading(getRobotDir());
 }
 
 void loop() {

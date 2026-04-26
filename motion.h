@@ -20,7 +20,8 @@ extern SoftwareSerial SUART;
 enum NavigationAlgorithm {
     LEFT_HAND,
     FLOOD_FILL,
-    TREMAUX
+    TREMAUX,
+    PLEDGE
 };
 
 extern NavigationAlgorithm currentAlgorithm;
