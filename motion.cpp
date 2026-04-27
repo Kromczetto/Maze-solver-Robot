@@ -63,6 +63,9 @@ void updateMotion() {
 
         if (currentAlgorithm == GREEDY) {
 
+            computeGreedyValues();  
+            sendMazeDebugBT(SUART); 
+
             RobotState decision = getNavigationDecision(left, front, right);
 
             resetEncoders();

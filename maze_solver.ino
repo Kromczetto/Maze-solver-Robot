@@ -44,8 +44,6 @@ void sendTelemetry() {
     if (hasWall(getRobotX(), getRobotY(), 2)) walls |= 1 << 2;
     if (hasWall(getRobotX(), getRobotY(), 3)) walls |= 1 << 3;
 
-    ///uint8_t value = getCellValue(getRobotX(), getRobotY());
-
     uint8_t value;
 
     if (currentAlgorithm == TREMAUX) {

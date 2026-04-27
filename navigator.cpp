@@ -136,7 +136,7 @@ RobotState decideGreedy(float left, float front, float right) {
     Direction dir = getRobotDir();
 
     int bestDir = -1;
-    int bestDist = 999;
+    int bestCost = 9999;
     int bestPriority = 100;
 
     for (int d = 0; d < 4; d++) {
@@ -154,6 +154,9 @@ RobotState decideGreedy(float left, float front, float right) {
             continue;
 
         int dist = abs(nx - GOAL.x) + abs(ny - GOAL.y);
+        int visits = getCellVisit(nx, ny);
+
+        int cost = dist + (visits >= 2 ? 10 : visits);
 
         int diff = (d - dir + 4) % 4;
 
@@ -163,8 +166,8 @@ RobotState decideGreedy(float left, float front, float right) {
         else if (diff == 1) priority = 2;
         else priority = 3;
 
-        if (dist < bestDist || (dist == bestDist && priority < bestPriority)) {
-            bestDist = dist;
+        if (cost < bestCost || (cost == bestCost && priority < bestPriority)) {
+            bestCost = cost;
             bestDir = d;
             bestPriority = priority;
         }
@@ -173,6 +176,8 @@ RobotState decideGreedy(float left, float front, float right) {
     if (bestDir == -1) {
         return TURNING_AROUND;
     }
+
+    addVisit(x, y, bestDir); 
 
     int diff = (bestDir - dir + 4) % 4;
 

@@ -41,4 +41,6 @@ uint8_t getVisit(int x, int y, int d);
 void addVisit(int x, int y, int d);
 uint8_t getCellVisit(int x, int y);
 
+void computeGreedyValues();
+
 #endif

@@ -222,3 +222,20 @@ uint8_t getCellVisit(int x, int y) {
 
     return maxV;
 }
+
+void computeGreedyValues() {
+
+    for (int x = 0; x < MAZE_SIZE; x++) {
+        for (int y = 0; y < MAZE_SIZE; y++) {
+
+            int dist = abs(x - GOAL.x) + abs(y - GOAL.y);
+            int visits = getCellVisit(x, y);
+
+            int val = dist + (visits >= 2 ? 10 : visits);
+
+            if (val > 15) val = 15;
+
+            maze[x][y].value = (uint8_t)val;
+        }
+    }
+}
