@@ -24,6 +24,8 @@ unsigned long elapsedTime = 0;
 int cellsTraversed = 0;
 int turnsCount = 0;
 
+bool runFinished = false;
+
 const char* getStateString() {
     switch (getRobotState()) {
 
@@ -127,6 +129,7 @@ void loop() {
             resetRobotState();
 
             robotEnabled = true;
+            runFinished = false;
 
             startTime = millis();
             cellsTraversed = 0;
@@ -158,7 +161,9 @@ void loop() {
         updateMotion();
     }
 
-    elapsedTime = millis() - startTime;
+    if (!runFinished) {
+        elapsedTime = millis() - startTime;
+    }
 
     if (millis() - lastTelemetry > TELEMETRY_INTERVAL) {
 

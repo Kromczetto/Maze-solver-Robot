@@ -13,6 +13,9 @@ extern SoftwareSerial SUART;
 extern int cellsTraversed;
 extern int turnsCount;
 extern bool robotEnabled;
+extern bool runFinished;
+extern unsigned long elapsedTime;
+extern unsigned long startTime;
 
 RobotState currentState = IDLE;
 
@@ -131,12 +134,16 @@ void updateMotion() {
                 stopMotors();
                 updatePosition();
 
-                if (isAtGoal()) {
+                 if (isAtGoal()) {
 
                     stopMotors();
-                    robotEnabled = false;
-                    currentState = IDLE;
 
+                    robotEnabled = false;
+                    runFinished = true;
+
+                    elapsedTime = millis() - startTime;
+
+                    currentState = IDLE;
                     return;
                 }
 
