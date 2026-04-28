@@ -12,19 +12,33 @@
 
 SoftwareSerial SUART(A1, A2);
 
-bool robotEnabled = true;
+bool robotEnabled = false;
+bool algorithmSelected = false;
 
 unsigned long lastTelemetry = 0;
 const int TELEMETRY_INTERVAL = 200;
 
+unsigned long startTime = 0;
+unsigned long elapsedTime = 0;
+
+int cellsTraversed = 0;
+int turnsCount = 0;
+
 const char* getStateString() {
     switch (getRobotState()) {
+
         case IDLE: return "IDLE";
+        case DECIDE: return "DECIDE";
+        case WAIT_FOR_FLOOD: return "FLOOD_WAIT";
+        case DEBUG_PAUSE: return "DEBUG";
+
         case FORWARD: return "FORWARD";
         case TURNING_LEFT: return "LEFT";
         case TURNING_RIGHT: return "RIGHT";
         case TURNING_AROUND: return "AROUND";
+        case POST_TURN_FORWARD: return "POST_FORWARD";
     }
+
     return "UNKNOWN";
 }
 
@@ -33,7 +47,6 @@ void sendTelemetry() {
     int front = (int)getFrontFiltered();
     int left = (int)getLeftFiltered();
     int right = (int)getRightFiltered();
-    int mazeSize = MAZE_SIZE;
 
     const char* state = getStateString();
 
@@ -52,25 +65,19 @@ void sendTelemetry() {
         value = getCellValue(getRobotX(), getRobotY());
     }
 
-    SUART.print(front);
-    SUART.print(",");
-    SUART.print(left);
-    SUART.print(",");
-    SUART.print(right);
-    SUART.print(",");
-    SUART.print(mazeSize);
-    SUART.print(",");
-    SUART.print(state);
-    SUART.print(",");
-    SUART.print(getRobotX());
-    SUART.print(",");
-    SUART.print(getRobotY());
-    SUART.print(",");
-    SUART.print((int)getRobotDir());
-    SUART.print(",");
-    SUART.print(walls);
-    SUART.print(",");
-    SUART.println(value); 
+    SUART.print(front); SUART.print(",");
+    SUART.print(left); SUART.print(",");
+    SUART.print(right); SUART.print(",");
+    SUART.print(state); SUART.print(",");
+    SUART.print(getRobotX()); SUART.print(",");
+    SUART.print(getRobotY()); SUART.print(",");
+    SUART.print((int)getRobotDir()); SUART.print(",");
+    SUART.print(walls); SUART.print(",");
+    SUART.print(value); SUART.print(",");
+    SUART.print(elapsedTime); SUART.print(",");
+    SUART.print(cellsTraversed); SUART.print(",");
+    SUART.print(turnsCount); SUART.print(",");
+    SUART.println((int)currentAlgorithm);
 }
 
 void setup() {
@@ -97,34 +104,65 @@ void setup() {
     float front = getFrontFiltered();
 
     updateWalls(left, front, right);
-
-    startDecision();
 }
 
 void loop() {
 
     if (SUART.available()) {
-        char c = SUART.read();
 
-        if (c == 'S') {
+        String command = SUART.readStringUntil('\n');
+        command.trim();
+
+        if (command == "S") {
             robotEnabled = false;
             stopMotors();
         }
 
-        if (c == 'R') {
+        else if (command == "R") {
+
+            if (!algorithmSelected) {
+                return;
+            }
+
+            resetRobotState();
+
             robotEnabled = true;
+
+            startTime = millis();
+            cellsTraversed = 0;
+            turnsCount = 0;
+
+            startDecision();
+
+            sendMazeDebugBT(SUART);
+        }
+
+        else if (command.startsWith("ALG:")) {
+
+            int algo = command.substring(4).toInt();
+
+            if (algo >= 0 && algo <= 3) {
+
+                currentAlgorithm = (NavigationAlgorithm)algo;
+                algorithmSelected = true;
+
+                SUART.print("ALG_SET:");
+                SUART.println(algo);
+            }
         }
     }
 
     updateTOF();
-    if (robotEnabled) {
+
+    if (robotEnabled && algorithmSelected) {
         updateMotion();
     }
 
+    elapsedTime = millis() - startTime;
+
     if (millis() - lastTelemetry > TELEMETRY_INTERVAL) {
 
-        SUART.listen(); 
-
+        SUART.listen();
         sendTelemetry();
         lastTelemetry = millis();
     }

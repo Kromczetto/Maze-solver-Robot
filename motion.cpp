@@ -10,6 +10,9 @@
 #include "maze.h"
 
 extern SoftwareSerial SUART;
+extern int cellsTraversed;
+extern int turnsCount;
+extern bool robotEnabled;
 
 RobotState currentState = IDLE;
 
@@ -37,6 +40,16 @@ void updateMotion() {
         updateWalls(left, front, right);
 
         stopMotors();
+
+        if (currentAlgorithm == LEFT_HAND) {
+
+            RobotState decision = getNavigationDecision(left, front, right);
+
+            resetEncoders();
+            currentState = decision;
+
+            return;
+        }
 
         if (currentAlgorithm == FLOOD_FILL) {
 
@@ -113,11 +126,17 @@ void updateMotion() {
 
             if (avgTicks >= TICKS_PER_CELL || front < 6) {
 
+                cellsTraversed++; 
+
                 stopMotors();
                 updatePosition();
 
                 if (isAtGoal()) {
+
+                    stopMotors();
+                    robotEnabled = false;
                     currentState = IDLE;
+
                     return;
                 }
 
@@ -136,6 +155,9 @@ void updateMotion() {
             long ticks = (abs(getLeftTicks()) + abs(getRightTicks())) / 2;
 
             if (ticks >= TURN_TICKS_LEFT) {
+
+                turnsCount++; 
+
                 stopMotors();
                 updateDirection(-1);
                 resetEncoders();
@@ -152,6 +174,9 @@ void updateMotion() {
             long ticks = (abs(getLeftTicks()) + abs(getRightTicks())) / 2;
 
             if (ticks >= TURN_TICKS_RIGHT) {
+
+                turnsCount++; 
+
                 stopMotors();
                 updateDirection(1);
                 resetEncoders();
@@ -169,6 +194,9 @@ void updateMotion() {
             long ticks = (abs(getLeftTicks()) + abs(getRightTicks())) / 2;
 
             if (ticks >= TURN_TICKS_LEFT * 2) {
+
+                turnsCount++; 
+
                 stopMotors();
                 updateDirection(2);
                 resetEncoders();

@@ -239,3 +239,13 @@ void computeGreedyValues() {
         }
     }
 }
+
+void resetRobotState() {
+
+    robotX = START.x;
+    robotY = START.y;
+    robotDir = NORTH;
+
+    initMaze();
+
+}

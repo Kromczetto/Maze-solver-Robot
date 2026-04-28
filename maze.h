@@ -14,7 +14,7 @@ struct Cell {
 };
 
 static const Point START = {0, 0};
-static const Point GOAL  = {2, 2};
+static const Point GOAL = {2, 2};
 
 void initMaze();
 void updateWalls(float left, float front, float right);
@@ -42,5 +42,6 @@ void addVisit(int x, int y, int d);
 uint8_t getCellVisit(int x, int y);
 
 void computeGreedyValues();
+void resetRobotState();
 
 #endif

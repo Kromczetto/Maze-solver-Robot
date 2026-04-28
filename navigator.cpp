@@ -3,10 +3,6 @@
 #include "maze.h"
 #include "robot_config.h"
 
-// NavigationAlgorithm currentAlgorithm = FLOOD_FILL;
-// NavigationAlgorithm currentAlgorithm = LEFT_HAND;
-// NavigationAlgorithm currentAlgorithm = TREMAUX;
-// NavigationAlgorithm currentAlgorithm = DEAD_END_FILL;
 NavigationAlgorithm currentAlgorithm = GREEDY;
 
 static int pledgeTurnSum = 0;
