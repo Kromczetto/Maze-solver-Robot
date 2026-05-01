@@ -4,15 +4,7 @@
 #include "robot_config.h"
 
 NavigationAlgorithm currentAlgorithm = GREEDY;
-
-static int pledgeTurnSum = 0;
-static Direction pledgeHeading = NORTH;
-static bool followingWall = false;
-
-void normalizeTurnSum() {
-    while (pledgeTurnSum > 180) pledgeTurnSum -= 360;
-    while (pledgeTurnSum < -180) pledgeTurnSum += 360;
-}
+extern SoftwareSerial SUART;
 
 RobotState decideTremaux(float left, float front, float right) {
 
@@ -139,7 +131,8 @@ RobotState decideGreedy(float left, float front, float right) {
 
         if (hasWall(x, y, d)) continue;
 
-        int nx = x, ny = y;
+        int nx = x;
+        int ny = y;
 
         if (d == NORTH) ny++;
         if (d == EAST)  nx++;
@@ -150,17 +143,18 @@ RobotState decideGreedy(float left, float front, float right) {
             continue;
 
         int dist = abs(nx - GOAL.x) + abs(ny - GOAL.y);
-        int visits = getCellVisit(nx, ny);
 
-        int cost = dist + (visits >= 2 ? 10 : visits);
+        int visits = getVisit(x, y, d);
+
+        int cost = dist + visits * 5;
 
         int diff = (d - dir + 4) % 4;
 
         int priority;
-        if (diff == 3) priority = 0;
-        else if (diff == 0) priority = 1;
-        else if (diff == 1) priority = 2;
-        else priority = 3;
+        if (diff == 0) priority = 0;
+        else if (diff == 1) priority = 1;
+        else if (diff == 3) priority = 1;
+        else priority = 2;
 
         if (cost < bestCost || (cost == bestCost && priority < bestPriority)) {
             bestCost = cost;
@@ -170,10 +164,11 @@ RobotState decideGreedy(float left, float front, float right) {
     }
 
     if (bestDir == -1) {
+        addVisit(x, y, dir);
         return TURNING_AROUND;
     }
 
-    addVisit(x, y, bestDir); 
+    addVisit(x, y, bestDir);
 
     int diff = (bestDir - dir + 4) % 4;
 
