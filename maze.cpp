@@ -249,3 +249,12 @@ void resetRobotState() {
     initMaze();
 
 }
+
+void computeFullFloodFill() {
+
+    floodFillStart();
+
+    while (!isFloodFillDone()) {
+        floodFillStep();
+    }
+}

@@ -13,48 +13,80 @@ RobotState decideTremaux(float left, float front, float right) {
     Direction dir = getRobotDir();
 
     int bestDir = -1;
-    int bestVisit = 3;
     int bestPriority = 100;
 
-    for (int d = 0; d < 4; d++) {
+    auto isOpen = [&](int d) {
 
-        if (hasWall(x, y, d)) continue;
+        // sprawdzamy sensory względem kierunku robota
+        if (d == dir) return front > 16;
+        if (d == (dir + 3) % 4) return left > 16;
+        if (d == (dir + 1) % 4) return right > 16;
 
-        int visit = getVisit(x, y, d);
+        return true; // tył – zakładamy że można zawrócić
+    };
 
-        if (visit >= 2) continue;
+    auto getPriority = [&](int d) {
 
         int diff = (d - dir + 4) % 4;
 
-        int priority;
-        if (diff == 3) priority = 0;
-        else if (diff == 0) priority = 1;
-        else if (diff == 1) priority = 2;
-        else priority = 3;
+        // 🔥 NOWY PRIORYTET: FORWARD > LEFT > RIGHT > BACK
+        if (diff == 0) return 0;      // FORWARD
+        if (diff == 3) return 1;      // LEFT
+        if (diff == 1) return 2;      // RIGHT
+        return 3;                     // BACK
+    };
 
-        if (visit < bestVisit || (visit == bestVisit && priority < bestPriority)) {
-            bestVisit = visit;
-            bestDir = d;
+    // =========================================
+    // 🔴 1. NAJPIERW visit == 0
+    // =========================================
+    for (int d = 0; d < 4; d++) {
+
+        if (hasWall(x, y, d)) continue;
+        if (!isOpen(d)) continue;
+
+        if (getVisit(x, y, d) != 0) continue;
+
+        int priority = getPriority(d);
+
+        if (priority < bestPriority) {
             bestPriority = priority;
+            bestDir = d;
         }
     }
 
+    // =========================================
+    // 🔴 2. POTEM visit == 1
+    // =========================================
     if (bestDir == -1) {
+
+        bestPriority = 100;
 
         for (int d = 0; d < 4; d++) {
 
             if (hasWall(x, y, d)) continue;
+            if (!isOpen(d)) continue;
 
-            int diff = (d - dir + 4) % 4;
+            if (getVisit(x, y, d) != 1) continue;
 
-            if (diff == 3) return TURNING_LEFT;
-            if (diff == 0) return FORWARD;
-            if (diff == 1) return TURNING_RIGHT;
+            int priority = getPriority(d);
+
+            if (priority < bestPriority) {
+                bestPriority = priority;
+                bestDir = d;
+            }
         }
+    }
 
+    // =========================================
+    // 🔴 3. JEŚLI NIC → ZAWRÓT
+    // =========================================
+    if (bestDir == -1) {
         return TURNING_AROUND;
     }
 
+    // =========================================
+    // 🔴 ZAPIS VISIT
+    // =========================================
     addVisit(x, y, bestDir);
 
     int diff = (bestDir - dir + 4) % 4;

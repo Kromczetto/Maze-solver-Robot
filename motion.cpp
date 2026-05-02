@@ -137,6 +137,9 @@ void updateMotion() {
                  if (isAtGoal()) {
 
                     stopMotors();
+                    updateWalls(left, front, right);
+                    computeFullFloodFill();
+                    sendMazeDebugBT(SUART);
 
                     robotEnabled = false;
                     runFinished = true;

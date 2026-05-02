@@ -43,5 +43,6 @@ uint8_t getCellVisit(int x, int y);
 
 void computeGreedyValues();
 void resetRobotState();
+void computeFullFloodFill();
 
 #endif
