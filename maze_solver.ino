@@ -63,7 +63,11 @@ void sendTelemetry() {
 
     if (currentAlgorithm == TREMAUX) {
         value = getCellVisit(getRobotX(), getRobotY());
-    } else {
+    }
+    else if (currentAlgorithm == GREEDY) {
+        value = getGreedyValue(getRobotX(), getRobotY());
+    }
+    else {
         value = getCellValue(getRobotX(), getRobotY());
     }
 

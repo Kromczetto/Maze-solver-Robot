@@ -203,7 +203,7 @@ void updateMotion() {
 
             long ticks = (abs(getLeftTicks()) + abs(getRightTicks())) / 2;
 
-            if (ticks >= TURN_TICKS_LEFT * 2) {
+            if (ticks >= TURN_TICKS_LEFT * 2 + 40) {
 
                 turnsCount++; 
 

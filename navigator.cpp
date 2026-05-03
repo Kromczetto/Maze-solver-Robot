@@ -5,6 +5,7 @@
 
 NavigationAlgorithm currentAlgorithm = GREEDY;
 extern SoftwareSerial SUART;
+extern bool turnAroundLeftDirection;
 
 RobotState decideTremaux(float left, float front, float right) {
 
@@ -17,33 +18,32 @@ RobotState decideTremaux(float left, float front, float right) {
 
     auto isOpen = [&](int d) {
 
-        // sprawdzamy sensory względem kierunku robota
-        if (d == dir) return front > 16;
-        if (d == (dir + 3) % 4) return left > 16;
-        if (d == (dir + 1) % 4) return right > 16;
+        if (d == dir) return front > (OPEN_THRESHOLD - 2);;
+        if (d == (dir + 3) % 4) return left > (OPEN_THRESHOLD_STRONG - 2);
+        if (d == (dir + 1) % 4) return right > (OPEN_THRESHOLD_STRONG - 2);
 
-        return true; // tył – zakładamy że można zawrócić
+        if (d == (dir + 2) % 4) {
+            return !hasWall(x, y, d); 
+        }
+        return false;
     };
 
     auto getPriority = [&](int d) {
 
         int diff = (d - dir + 4) % 4;
 
-        // 🔥 NOWY PRIORYTET: FORWARD > LEFT > RIGHT > BACK
-        if (diff == 0) return 0;      // FORWARD
-        if (diff == 3) return 1;      // LEFT
-        if (diff == 1) return 2;      // RIGHT
-        return 3;                     // BACK
+        if (diff == 3) return 0;
+        if (diff == 0) return 1;
+        if (diff == 1) return 2;
+        return 3;
     };
 
-    // =========================================
-    // 🔴 1. NAJPIERW visit == 0
-    // =========================================
     for (int d = 0; d < 4; d++) {
 
         if (hasWall(x, y, d)) continue;
         if (!isOpen(d)) continue;
 
+        if (getVisit(x, y, d) >= 2) continue; 
         if (getVisit(x, y, d) != 0) continue;
 
         int priority = getPriority(d);
@@ -54,9 +54,6 @@ RobotState decideTremaux(float left, float front, float right) {
         }
     }
 
-    // =========================================
-    // 🔴 2. POTEM visit == 1
-    // =========================================
     if (bestDir == -1) {
 
         bestPriority = 100;
@@ -77,16 +74,20 @@ RobotState decideTremaux(float left, float front, float right) {
         }
     }
 
-    // =========================================
-    // 🔴 3. JEŚLI NIC → ZAWRÓT
-    // =========================================
     if (bestDir == -1) {
+
+        if (left > right + 2) {
+            turnAroundLeftDirection = true;
+        }
+        else if (right > left + 2) {
+            turnAroundLeftDirection = false;
+        }
+        else {
+            turnAroundLeftDirection = true;
+        }
+
         return TURNING_AROUND;
     }
-
-    // =========================================
-    // 🔴 ZAPIS VISIT
-    // =========================================
     addVisit(x, y, bestDir);
 
     int diff = (bestDir - dir + 4) % 4;

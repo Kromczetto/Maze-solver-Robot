@@ -14,6 +14,16 @@ static int head = 0;
 static int tail = 0;
 static bool floodRunning = false;
 
+void resetVisits() {
+    for (int x = 0; x < MAZE_SIZE; x++) {
+        for (int y = 0; y < MAZE_SIZE; y++) {
+            for (int d = 0; d < 4; d++) {
+                maze[x][y].visits[d] = 0;
+            }
+        }
+    }
+}
+
 void initMaze() {
     for (int x = 0; x < MAZE_SIZE; x++) {
         for (int y = 0; y < MAZE_SIZE; y++) {
@@ -23,6 +33,7 @@ void initMaze() {
             }
 
             maze[x][y].value = 255;
+            maze[x][y].greedy = 255;
         }
     }
 
@@ -223,6 +234,26 @@ uint8_t getCellVisit(int x, int y) {
     return maxV;
 }
 
+void resetRobotState() {
+
+    robotX = START.x;
+    robotY = START.y;
+    robotDir = NORTH;
+
+    initMaze();
+    resetVisits();
+
+    floodRunning = false;
+    head = 0;
+    tail = 0;
+
+}
+
+uint8_t getGreedyValue(int x, int y) {
+    return maze[x][y].greedy;
+}
+
+
 void computeGreedyValues() {
 
     for (int x = 0; x < MAZE_SIZE; x++) {
@@ -235,19 +266,9 @@ void computeGreedyValues() {
 
             if (val > 15) val = 15;
 
-            maze[x][y].value = (uint8_t)val;
+            maze[x][y].greedy = (uint8_t)val;
         }
     }
-}
-
-void resetRobotState() {
-
-    robotX = START.x;
-    robotY = START.y;
-    robotDir = NORTH;
-
-    initMaze();
-
 }
 
 void computeFullFloodFill() {

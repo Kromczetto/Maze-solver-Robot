@@ -4,13 +4,13 @@
   #define WALL_THRESHOLD_CM 10
   #define OPEN_THRESHOLD 16
 
-  #define TURN_TICKS_LEFT 350
-  #define TURN_TICKS_RIGHT 350
+  #define TURN_TICKS_LEFT 340
+  #define TURN_TICKS_RIGHT 340
 
   #define OPEN_THRESHOLD_STRONG 18
   #define TICKS_PER_CELL 1050
 
-  #define MAZE_SIZE 5
+  #define MAZE_SIZE 6
   #define POST_TURN_FORWARD_TICKS 275
 
 #endif
