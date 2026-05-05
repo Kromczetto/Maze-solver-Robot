@@ -16,22 +16,8 @@ RobotState decideTremaux(float left, float front, float right) {
     int bestDir = -1;
     int bestPriority = 100;
 
-    auto isOpen = [&](int d) {
-
-        if (d == dir) return front > (OPEN_THRESHOLD - 2);;
-        if (d == (dir + 3) % 4) return left > (OPEN_THRESHOLD_STRONG - 2);
-        if (d == (dir + 1) % 4) return right > (OPEN_THRESHOLD_STRONG - 2);
-
-        if (d == (dir + 2) % 4) {
-            return !hasWall(x, y, d); 
-        }
-        return false;
-    };
-
     auto getPriority = [&](int d) {
-
         int diff = (d - dir + 4) % 4;
-
         if (diff == 3) return 0;
         if (diff == 0) return 1;
         if (diff == 1) return 2;
@@ -39,56 +25,49 @@ RobotState decideTremaux(float left, float front, float right) {
     };
 
     for (int d = 0; d < 4; d++) {
-
         if (hasWall(x, y, d)) continue;
-        if (!isOpen(d)) continue;
-
-        if (getVisit(x, y, d) >= 2) continue; 
         if (getVisit(x, y, d) != 0) continue;
 
-        int priority = getPriority(d);
-
-        if (priority < bestPriority) {
-            bestPriority = priority;
+        int p = getPriority(d);
+        if (p < bestPriority) {
+            bestPriority = p;
             bestDir = d;
         }
     }
 
     if (bestDir == -1) {
-
         bestPriority = 100;
 
         for (int d = 0; d < 4; d++) {
-
             if (hasWall(x, y, d)) continue;
-            if (!isOpen(d)) continue;
-
             if (getVisit(x, y, d) != 1) continue;
 
-            int priority = getPriority(d);
-
-            if (priority < bestPriority) {
-                bestPriority = priority;
+            int p = getPriority(d);
+            if (p < bestPriority) {
+                bestPriority = p;
                 bestDir = d;
             }
         }
     }
 
     if (bestDir == -1) {
+        bestPriority = 100;
 
-        if (left > right + 2) {
-            turnAroundLeftDirection = true;
-        }
-        else if (right > left + 2) {
-            turnAroundLeftDirection = false;
-        }
-        else {
-            turnAroundLeftDirection = true;
-        }
+        for (int d = 0; d < 4; d++) {
+            if (hasWall(x, y, d)) continue;
+            if (getVisit(x, y, d) != 2) continue;
 
+            int p = getPriority(d);
+            if (p < bestPriority) {
+                bestPriority = p;
+                bestDir = d;
+            }
+        }
+    }
+
+    if (bestDir == -1) {
         return TURNING_AROUND;
     }
-    addVisit(x, y, bestDir);
 
     int diff = (bestDir - dir + 4) % 4;
 

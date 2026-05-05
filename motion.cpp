@@ -129,12 +129,23 @@ void updateMotion() {
 
             if (avgTicks >= TICKS_PER_CELL || front < 6) {
 
-                cellsTraversed++; 
+                cellsTraversed++;
 
                 stopMotors();
+
+                int prevX = getRobotX();
+                int prevY = getRobotY();
+                Direction prevDir = getRobotDir();
+
                 updatePosition();
 
-                 if (isAtGoal()) {
+                int newX = getRobotX();
+                int newY = getRobotY();
+
+                addVisit(prevX, prevY, prevDir);
+                addVisit(newX, newY, (prevDir + 2) % 4);
+
+                if (isAtGoal()) {
 
                     stopMotors();
                     updateWalls(left, front, right);

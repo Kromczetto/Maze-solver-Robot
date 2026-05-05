@@ -204,22 +204,8 @@ uint8_t getVisit(int x, int y, int d) {
 }
 
 void addVisit(int x, int y, int d) {
-
     if (maze[x][y].visits[d] < 2)
         maze[x][y].visits[d]++;
-
-    int nx = x, ny = y;
-
-    if (d == NORTH) ny++;
-    if (d == EAST) nx++;
-    if (d == SOUTH) ny--;
-    if (d == WEST) nx--;
-
-    if (nx < 0 || ny < 0 || nx >= MAZE_SIZE || ny >= MAZE_SIZE)
-        return;
-
-    if (maze[nx][ny].visits[(d + 2) % 4] < 2)
-        maze[nx][ny].visits[(d + 2) % 4]++;
 }
 
 uint8_t getCellVisit(int x, int y) {

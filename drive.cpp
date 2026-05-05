@@ -10,7 +10,7 @@ void driveForward(bool stabilize) {
     float left = getLeftFiltered();
     float right = getRightFiltered();
 
-    int baseLeft = 102;
+    int baseLeft = 107;
     int baseRight = 115;
 
     int leftSpeed = baseLeft;
@@ -33,11 +33,11 @@ void driveForward(bool stabilize) {
         }
 
         else if (leftWall) {
-            error = (left - 8.0);
+            error = (left - 9.0);
         }
 
         else if (rightWall) {
-            error = -(right - 8.0);
+            error = -(right - 9.0);
         }
 
         else {
