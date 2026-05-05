@@ -6,6 +6,7 @@
 NavigationAlgorithm currentAlgorithm = GREEDY;
 extern SoftwareSerial SUART;
 extern bool turnAroundLeftDirection;
+extern Direction lastMoveDir;
 
 RobotState decideTremaux(float left, float front, float right) {
 
@@ -13,59 +14,78 @@ RobotState decideTremaux(float left, float front, float right) {
     int y = getRobotY();
     Direction dir = getRobotDir();
 
+    Direction cameFrom = (Direction)((lastMoveDir + 2) % 4);
+
     int bestDir = -1;
     int bestPriority = 100;
 
     auto getPriority = [&](int d) {
         int diff = (d - dir + 4) % 4;
+
         if (diff == 3) return 0;
         if (diff == 0) return 1;
         if (diff == 1) return 2;
         return 3;
     };
 
+    int unvisitedCount = 0;
+
     for (int d = 0; d < 4; d++) {
         if (hasWall(x, y, d)) continue;
-        if (getVisit(x, y, d) != 0) continue;
-
-        int p = getPriority(d);
-        if (p < bestPriority) {
-            bestPriority = p;
-            bestDir = d;
-        }
+        if (getVisit(x, y, d) == 0) unvisitedCount++;
     }
 
-    if (bestDir == -1) {
-        bestPriority = 100;
+    if (unvisitedCount > 0) {
 
         for (int d = 0; d < 4; d++) {
+
             if (hasWall(x, y, d)) continue;
-            if (getVisit(x, y, d) != 1) continue;
+            if (getVisit(x, y, d) != 0) continue;
 
             int p = getPriority(d);
+
             if (p < bestPriority) {
                 bestPriority = p;
                 bestDir = d;
             }
         }
     }
+    else {
 
-    if (bestDir == -1) {
-        bestPriority = 100;
+        if (!hasWall(x, y, cameFrom) && getVisit(x, y, cameFrom) < 2) {
+            bestDir = cameFrom;
+        }
+        else {
 
-        for (int d = 0; d < 4; d++) {
-            if (hasWall(x, y, d)) continue;
-            if (getVisit(x, y, d) != 2) continue;
+            int bestVisit = 3;
 
-            int p = getPriority(d);
-            if (p < bestPriority) {
-                bestPriority = p;
-                bestDir = d;
+            for (int d = 0; d < 4; d++) {
+
+                if (hasWall(x, y, d)) continue;
+
+                int v = getVisit(x, y, d);
+                int p = getPriority(d);
+
+                if (v < bestVisit || (v == bestVisit && p < bestPriority)) {
+                    bestVisit = v;
+                    bestPriority = p;
+                    bestDir = d;
+                }
             }
         }
     }
 
     if (bestDir == -1) {
+        if (left > right + 2) {
+            turnAroundLeftDirection = true;
+        }
+        else if (right > left + 2) {
+            turnAroundLeftDirection = false; 
+        }
+        else {
+            turnAroundLeftDirection = true;
+        }
+
         return TURNING_AROUND;
     }
 
@@ -74,6 +94,16 @@ RobotState decideTremaux(float left, float front, float right) {
     if (diff == 0) return FORWARD;
     if (diff == 1) return TURNING_RIGHT;
     if (diff == 3) return TURNING_LEFT;
+
+    if (left > right + 2) {
+        turnAroundLeftDirection = true;
+    }
+    else if (right > left + 2) {
+        turnAroundLeftDirection = false;
+    }
+    else {
+        turnAroundLeftDirection = true;
+    }
 
     return TURNING_AROUND;
 }
@@ -158,7 +188,7 @@ RobotState decideGreedy(float left, float front, float right) {
 
         int visits = getVisit(x, y, d);
 
-        int cost = dist + visits * 5;
+        int cost = dist + visits;
 
         int diff = (d - dir + 4) % 4;
 

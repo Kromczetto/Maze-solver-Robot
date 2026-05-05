@@ -16,6 +16,7 @@ extern bool robotEnabled;
 extern bool runFinished;
 extern unsigned long elapsedTime;
 extern unsigned long startTime;
+Direction lastMoveDir = NORTH;
 
 RobotState currentState = IDLE;
 
@@ -40,58 +41,80 @@ void updateMotion() {
 
         case DECIDE: {
 
-        updateWalls(left, front, right);
+            updateWalls(left, front, right);
+            stopMotors();
 
-        stopMotors();
+            if (currentAlgorithm == LEFT_HAND) {
 
-        if (currentAlgorithm == LEFT_HAND) {
+                RobotState decision = getNavigationDecision(left, front, right);
 
-            RobotState decision = getNavigationDecision(left, front, right);
+                if (decision == FORWARD)
+                    lastMoveDir = getRobotDir();
+                else if (decision == TURNING_LEFT)
+                    lastMoveDir = (Direction)((getRobotDir() + 3) % 4);
+                else if (decision == TURNING_RIGHT)
+                    lastMoveDir = (Direction)((getRobotDir() + 1) % 4);
+                else if (decision == TURNING_AROUND)
+                    lastMoveDir = (Direction)((getRobotDir() + 2) % 4);
 
-            resetEncoders();
-            currentState = decision;
+                resetEncoders();
+                currentState = decision;
+                return;
+            }
+
+            if (currentAlgorithm == FLOOD_FILL) {
+
+                SUART.print("RECALC,");
+                SUART.print(getRobotX());
+                SUART.print(",");
+                SUART.println(getRobotY());
+
+                floodFillStart();
+                currentState = WAIT_FOR_FLOOD;
+                return;
+            }
+
+            if (currentAlgorithm == TREMAUX) {
+
+                RobotState decision = getNavigationDecision(left, front, right);
+
+                if (decision == FORWARD)
+                    lastMoveDir = getRobotDir();
+                else if (decision == TURNING_LEFT)
+                    lastMoveDir = (Direction)((getRobotDir() + 3) % 4);
+                else if (decision == TURNING_RIGHT)
+                    lastMoveDir = (Direction)((getRobotDir() + 1) % 4);
+                else if (decision == TURNING_AROUND)
+                    lastMoveDir = (Direction)((getRobotDir() + 2) % 4);
+
+                resetEncoders();
+                currentState = decision;
+                return;
+            }
+
+            if (currentAlgorithm == GREEDY) {
+
+                computeGreedyValues();
+                sendMazeDebugBT(SUART);
+
+                RobotState decision = getNavigationDecision(left, front, right);
+
+                if (decision == FORWARD)
+                    lastMoveDir = getRobotDir();
+                else if (decision == TURNING_LEFT)
+                    lastMoveDir = (Direction)((getRobotDir() + 3) % 4);
+                else if (decision == TURNING_RIGHT)
+                    lastMoveDir = (Direction)((getRobotDir() + 1) % 4);
+                else if (decision == TURNING_AROUND)
+                    lastMoveDir = (Direction)((getRobotDir() + 2) % 4);
+
+                resetEncoders();
+                currentState = decision;
+                return;
+            }
 
             return;
         }
-
-        if (currentAlgorithm == FLOOD_FILL) {
-
-            SUART.print("RECALC,");
-            SUART.print(getRobotX());
-            SUART.print(",");
-            SUART.println(getRobotY());
-
-            floodFillStart();
-
-            currentState = WAIT_FOR_FLOOD;
-            return;
-        }
-
-        if (currentAlgorithm == TREMAUX) {
-
-            RobotState decision = getNavigationDecision(left, front, right);
-
-            resetEncoders();
-            currentState = decision;
-
-            return;
-        }
-
-        if (currentAlgorithm == GREEDY) {
-
-            computeGreedyValues();  
-            sendMazeDebugBT(SUART); 
-
-            RobotState decision = getNavigationDecision(left, front, right);
-
-            resetEncoders();
-            currentState = decision;
-
-            return;
-        }
-
-        return;
-    }
         case DEBUG_PAUSE: {
 
             stopMotors();
@@ -135,15 +158,16 @@ void updateMotion() {
 
                 int prevX = getRobotX();
                 int prevY = getRobotY();
-                Direction prevDir = getRobotDir();
+
+                Direction moveDir = lastMoveDir;
 
                 updatePosition();
 
                 int newX = getRobotX();
                 int newY = getRobotY();
 
-                addVisit(prevX, prevY, prevDir);
-                addVisit(newX, newY, (prevDir + 2) % 4);
+                addVisit(prevX, prevY, moveDir);
+                addVisit(newX, newY, (moveDir + 2) % 4);
 
                 if (isAtGoal()) {
 

@@ -210,6 +210,14 @@ void addVisit(int x, int y, int d) {
 
 uint8_t getCellVisit(int x, int y) {
 
+    int open = 0;
+
+    for (int d = 0; d < 4; d++) {
+        if (!hasWall(x, y, d)) open++;
+    }
+
+    if (open > 2) return 0;
+
     uint8_t maxV = 0;
 
     for (int d = 0; d < 4; d++) {

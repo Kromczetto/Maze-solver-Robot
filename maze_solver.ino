@@ -132,6 +132,19 @@ void loop() {
 
             resetRobotState();
 
+            if (currentAlgorithm == TREMAUX) {
+
+                int x = getRobotX();
+                int y = getRobotY();
+
+                for (int d = 0; d < 4; d++) {
+                    if (!hasWall(x, y, d)) {
+                        addVisit(x, y, d);
+                        addVisit(x, y, d);
+                    }
+                }
+            }
+
             robotEnabled = true;
             runFinished = false;
 
