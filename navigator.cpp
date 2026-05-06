@@ -166,12 +166,13 @@ RobotState decideGreedy(float left, float front, float right) {
     Direction dir = getRobotDir();
 
     int bestDir = -1;
-    int bestCost = 9999;
-    int bestPriority = 100;
+    int bestScore = 9999;
 
     for (int d = 0; d < 4; d++) {
 
-        if (hasWall(x, y, d)) continue;
+        // ściana
+        if (hasWall(x, y, d))
+            continue;
 
         int nx = x;
         int ny = y;
@@ -181,42 +182,50 @@ RobotState decideGreedy(float left, float front, float right) {
         if (d == SOUTH) ny--;
         if (d == WEST)  nx--;
 
+
         if (nx < 0 || ny < 0 || nx >= MAZE_SIZE || ny >= MAZE_SIZE)
             continue;
 
-        int dist = abs(nx - GOAL.x) + abs(ny - GOAL.y);
+        int h = abs(nx - GOAL.x) + abs(ny - GOAL.y);
 
         int visits = getVisit(x, y, d);
 
-        int cost = dist + visits;
+        int score = 0;
+
+        score += h * 10;
+
+        score += visits * 25;
 
         int diff = (d - dir + 4) % 4;
 
-        int priority;
-        if (diff == 0) priority = 0;
-        else if (diff == 1) priority = 1;
-        else if (diff == 3) priority = 1;
-        else priority = 2;
+        if (diff == 0)
+            score -= 3;
 
-        if (cost < bestCost || (cost == bestCost && priority < bestPriority)) {
-            bestCost = cost;
+        else if (diff == 1 || diff == 3)
+            score += 5;
+
+        else if (diff == 2)
+            score += 100;
+
+        if (score < bestScore) {
+            bestScore = score;
             bestDir = d;
-            bestPriority = priority;
         }
     }
 
-    if (bestDir == -1) {
-        addVisit(x, y, dir);
+    if (bestDir == -1)
         return TURNING_AROUND;
-    }
-
-    addVisit(x, y, bestDir);
 
     int diff = (bestDir - dir + 4) % 4;
 
-    if (diff == 0) return FORWARD;
-    if (diff == 1) return TURNING_RIGHT;
-    if (diff == 3) return TURNING_LEFT;
+    if (diff == 0)
+        return FORWARD;
+
+    if (diff == 1)
+        return TURNING_RIGHT;
+
+    if (diff == 3)
+        return TURNING_LEFT;
 
     return TURNING_AROUND;
 }

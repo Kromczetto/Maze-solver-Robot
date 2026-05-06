@@ -245,7 +245,7 @@ void updateMotion() {
                 stopMotors();
                 updateDirection(2);
                 resetEncoders();
-                currentState = FORWARD;
+                currentState = POST_TURN_FORWARD;
             }
 
             break;
