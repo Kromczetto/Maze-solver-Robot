@@ -10,7 +10,7 @@
   #define OPEN_THRESHOLD_STRONG 18
   #define TICKS_PER_CELL 1050
 
-  #define MAZE_SIZE 6
-  #define POST_TURN_FORWARD_TICKS 275
+  #define MAZE_SIZE 7
+  #define POST_TURN_FORWARD_TICKS 225
 
 #endif

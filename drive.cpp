@@ -10,7 +10,7 @@ void driveForward(bool stabilize) {
     float left = getLeftFiltered();
     float right = getRightFiltered();
 
-    int baseLeft = 107;
+    int baseLeft = 110;
     int baseRight = 115;
 
     int leftSpeed = baseLeft;
@@ -25,8 +25,8 @@ void driveForward(bool stabilize) {
 
         float error = 0;
 
-        bool leftWall = left < OPEN_THRESHOLD;
-        bool rightWall = right < OPEN_THRESHOLD;
+        bool leftWall = left < OPEN_THRESHOLD_STRONG;
+        bool rightWall = right < OPEN_THRESHOLD_STRONG;
 
         if (leftWall && rightWall) {
             error = (left - right);

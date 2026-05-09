@@ -170,7 +170,6 @@ RobotState decideGreedy(float left, float front, float right) {
 
     for (int d = 0; d < 4; d++) {
 
-        // ściana
         if (hasWall(x, y, d))
             continue;
 

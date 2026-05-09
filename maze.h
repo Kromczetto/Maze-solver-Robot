@@ -15,7 +15,7 @@ struct Cell {
 };
 
 static const Point START = {0, 0};
-static const Point GOAL = {2, 2};
+static const Point GOAL = {6,6};
 
 void initMaze();
 void resetVisits();
